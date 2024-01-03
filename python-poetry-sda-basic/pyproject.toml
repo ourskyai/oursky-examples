@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "oursky-sda"
+version = "0.1.0"
+description = ""
+authors = ["Kyle LeNeau <kyle@bright.ai>"]
+readme = "README.md"
+packages = [{include = "oursky_sda"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+ourskyai-sda-api = "^1.3.1945"
+python-dotenv = "^1.0.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
