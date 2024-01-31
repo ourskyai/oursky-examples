@@ -10,12 +10,4 @@ Each folder is an "app" or example with minimal setup and independent readme's t
 
 * [python-poetry-sda-basic](./python-poetry-sda-basic) - Uses the OurSky SDA Python SDK to show how to import and use the SDK to fetch an array of TDMs
 
-
-## Create Example
-
-### Python + Poetry
-```sh
-poetry new ./<folder> --name oursky_sda
-cd <folder>
-poetry add oursky_sda_api
-```
+* [csharp-sda-basic](./csharp-sda-basic) - Uses the OurSky SDA Csharp SDK to show how to initialize the SDK, create observation tasks, and fetch results.
