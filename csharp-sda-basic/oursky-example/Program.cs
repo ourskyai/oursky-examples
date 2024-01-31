@@ -50,6 +50,14 @@ class Program{
         Console.WriteLine("==================== Observation Sequence ====================");
         foreach (var sequence in observationSequence) {
             Console.WriteLine(sequence);
+
+            // fetch the node information for this OSR
+            foreach (var imageSet in sequence.ImageSets) {
+                var nodes = sdaClient.V1GetNodeProperties(
+                    nodeId: imageSet.NodeId
+                );
+                Console.WriteLine(nodes);
+            }
         }
     }
 }
