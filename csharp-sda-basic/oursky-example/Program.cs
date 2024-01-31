@@ -2,8 +2,10 @@
 using OurSky.Sda.Api.Client;
 using OurSky.Sda.Api.Model;
 
-class Program{
-    static void Main(string[] args){
+class Program
+{
+    static void Main(string[] args)
+    {
         var apiKey = Environment.GetEnvironmentVariable("OURSKY_API_TOKEN") ?? throw new Exception("OURSKY_API_TOKEN is not set");
         var defaultHeaders = new Dictionary<string, string> { { "Authorization", $"Bearer {apiKey}" } };
 
@@ -17,7 +19,7 @@ class Program{
         // fetch the iss target
         var targets = sdaClient.V1GetSatelliteTargets(noradId: "25544", orbitType: OrbitType.LEO).Targets;
 
-        Console.WriteLine("==================== ISS Target ====================");        
+        Console.WriteLine("==================== ISS Target ====================");
         foreach (var target in targets)
         {
             Console.WriteLine(target);
@@ -32,7 +34,8 @@ class Program{
         );
 
         Console.WriteLine("==================== Upcoming Passes ====================");
-        foreach (var pass in upcomingPasses) {
+        foreach (var pass in upcomingPasses)
+        {
             Console.WriteLine(pass);
         }
 
@@ -48,11 +51,13 @@ class Program{
         );
 
         Console.WriteLine("==================== Observation Sequence ====================");
-        foreach (var sequence in observationSequence) {
+        foreach (var sequence in observationSequence)
+        {
             Console.WriteLine(sequence);
 
             // fetch the node information for this OSR
-            foreach (var imageSet in sequence.ImageSets) {
+            foreach (var imageSet in sequence.ImageSets)
+            {
                 var nodes = sdaClient.V1GetNodeProperties(
                     nodeId: imageSet.NodeId
                 );
