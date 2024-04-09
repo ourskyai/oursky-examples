@@ -2,6 +2,8 @@
 
 This reposistory is a list of OurSky examples using the published SDKs. 
 
+Please ensure you have signed up to [OurSky](https://console.prod.oursky.ai/) and have a valid token. You can get your token by navigating to Accounts under the Dashboard section -> General, then pressing the "Create" button. Copy your token insert it into `OURSKY_API_TOKEN`. 
+
 Each folder is an "app" or example with minimal setup and independent readme's to describe the example or setup as needed.
 
 ## Examples:
