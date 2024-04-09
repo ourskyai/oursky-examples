@@ -8,7 +8,8 @@ Each folder is an "app" or example with minimal setup and independent readme's t
 
 ### Python
 
-* [python-poetry-sda-basic](./python-poetry-sda-basic) - Uses the OurSky SDA Python SDK to show how to import and use the SDK to fetch an array of TDMs
+* [python-poetry-sda-basic](./python-poetry-sda-basic) - Uses the OurSky SDA Python SDK to show how to import and use the SDK to fetch an array of TDMs.
+* [python-schedule-search-instructions](./python-schedule-search-instructions) - Uses the OurSky API to create search instructions for satellites with outdated orbital information.
 
 ### C#
 
