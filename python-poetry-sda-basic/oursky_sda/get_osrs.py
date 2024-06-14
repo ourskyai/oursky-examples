@@ -26,6 +26,11 @@ norad_ids = ["25875"]  # List[str] | A list of NORAD IDs of the satellite target
 write_to_disk = True # bool | If true, the response will be written to a file. (optional) (default to False)
 from_time = datetime.datetime.now(datetime.timezone.utc) - timedelta(days=1)  # datetime | The start time of the observation sequence results to fetch. (optional)
 
+# create osrs directory if it does not exist
+if write_to_disk:
+    if not os.path.exists("osrs"):
+        os.makedirs("osrs")
+
 # Enter a context with an instance of the API client
 with ourskyai_sda_api.ApiClient(configuration) as api_client:
     api_instance = ourskyai_sda_api.DefaultApi(api_client)
@@ -54,7 +59,7 @@ with ourskyai_sda_api.ApiClient(configuration) as api_client:
         print(f"Fetched {len(osrs)} total OSRs for ({target.norad_id})")
         for osr in osrs:
             if write_to_disk:
-                with open(f"{norad_id}_{osr.created_at}.json", "w") as f:
+                with open(f"osrs/{norad_id}_{osr.created_at}.json", "w") as f:
                     f.write(dumps(osr.to_dict(), default=json_serial, indent=4, sort_keys=True))
             else:
                 print(osr.to_str())
