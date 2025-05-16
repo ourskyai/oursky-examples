@@ -5,23 +5,39 @@
 #include <iostream>
 #include <memory>
 #include <chrono>
+#include <fstream>
 
 #include "oslowlevelsdk.grpc.pb.h"
 #include "grpcpp/channel.h"
 #include "grpcpp/create_channel.h"
 #include "grpcpp/security/credentials.h"
 
-OSLowLevelSdkClient::OSLowLevelSdkClient(const std::string &serverAddress) {
-  grpc::SslCredentialsOptions sslOptions;
-  sslOptions.pem_root_certs = "";
-  sslOptions.pem_cert_chain = "";
-  sslOptions.pem_private_key = "";
-  auto credentials = grpc::SslCredentials(sslOptions);
-  grpc::ChannelArguments args;
-  args.SetSslTargetNameOverride("xyz.nodes.prod.oursky.ai");
-  auto channel = grpc::CreateCustomChannel(serverAddress, credentials, args);
+std::string readPemFile(const std::string& file_path) {
+    std::ifstream file(file_path);
+    return std::string((std::istreambuf_iterator<char>(file)),
+                       std::istreambuf_iterator<char>());
+}
 
-  this->stub = oslowlevelsdk::ObservatoryService::NewStub(channel);
+OSLowLevelSdkClient::OSLowLevelSdkClient(const std::string &serverAddress) {
+    grpc::SslCredentialsOptions sslOptions;
+
+    // Optional: if you cannot add the observable space root cert to the system
+    // Load the server's cert (as a trusted root)
+    sslOptions.pem_root_certs = readPemFile("/home/connor/git/github.com/oursky/oursky-examples/cpp-lowlevelsdk/oursky_root.crt");
+
+    // Load the client's cert chain and private key (for mutual TLS)
+    sslOptions.pem_cert_chain = readPemFile("/home/connor/git/github.com/oursky/oursky-examples/cpp-lowlevelsdk/client_cert.pem");
+    sslOptions.pem_private_key = readPemFile("/home/connor/git/github.com/oursky/oursky-examples/cpp-lowlevelsdk/client_key.pem");
+
+    // Set SSL Credentials for mutual TLS
+    auto credentials = grpc::SslCredentials(sslOptions);
+
+    // Override target name if cert CN or SAN differs from actual address
+    grpc::ChannelArguments args;
+    args.SetSslTargetNameOverride("9190cf50-1373-4910-b549-cb9caa99b283.nodes.prod.oursky.ai");
+
+    auto channel = grpc::CreateCustomChannel(serverAddress, credentials, args);
+    this->stub = oslowlevelsdk::ObservatoryService::NewStub(channel);
 }
 
 void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicroseconds, int timeoutMilliseconds,
