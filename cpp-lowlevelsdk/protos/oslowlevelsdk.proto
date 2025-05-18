@@ -5,37 +5,252 @@ import "google/protobuf/timestamp.proto";
 
 package oslowlevelsdk;
 
-// Service defining low-level access to the system's axes status.
-service OSLowLevelSdkService {
+// Service defining low-level access to the system's observatory.
+service ObservatoryService {
   // Server streaming RPC that continuously streams the status of multiple axes.
-  // The client sends a request specifying the desired update interval and whether
-  // detailed axis status should be included. The server streams status updates.
-  rpc StreamAxesStatus (AxesStatusRequest) returns (stream AxesStatus);
-  rpc ApplyMountOffsets(MountOffsetRequest) returns (Status);
+  // The client sends a request specifying the desired update interval.
+  // The server streams status updates.
+  rpc V1StreamObservatoryStatus (V1StreamObservatoryStatusRequest) returns (stream V1ObservatoryStatus);
+  // Returns a one-time snapshot of the current state of all relevant observatory axes.
+  // Ideal for status polling or initial synchronization.
+  rpc V1GetObservatoryStatus (EmptyRequest) returns (V1ObservatoryStatus);
+  // Applies a set of positional offsets to each mount axis.
+  rpc V1ApplyMountOffsets(V1ApplyMountOffsetsRequest) returns (V1Status);
+  // Enables the motor on the primary mount axis (right ascension or azimuth).
+  rpc V1EnablePrimaryMountAxis (EmptyRequest) returns (V1Status);
+  // Disables the motor on the primary mount axis.
+  rpc V1DisablePrimaryMountAxis (EmptyRequest) returns (V1Status);
+  // Enables the motor on the secondary mount axis (declination or elevation).
+  rpc V1EnableSecondaryMountAxis (EmptyRequest) returns (V1Status);
+  // Disables the motor on the secondary mount axis.
+  rpc V1DisableSecondaryMountAxis (EmptyRequest) returns (V1Status);
+  // Commands the mount to move to a specified target, either in equatorial (RA/DEC)
+  // or horizontal (Az/El) coordinates. Coordinates are provided in the GotoRequest.
+  rpc V1GotoMountCoordinates (V1GotoMountCoordinatesRequest) returns (V1Status);
+  // Stops motion on one or more axes based on the StopRequest.
+  // Supports different stop types.
+  rpc V1StopMount (V1StopMountRequest) returns (V1Status);
+  // Commands the mount to move to its pre-configured park position.
+  rpc V1ParkMount (V1ParkMountRequest) returns (V1Status);
+  // Sets the current position of the mount as the new park position.
+  // Future park commands will return to this position.
+  rpc V1SetMountPark (EmptyRequest) returns (V1Status);
+
+  // Enable motor control for the enclosure shutter axis.
+  rpc V1EnableEnclosureShutterAxis (EmptyRequest) returns (V1Status);
+  // Disable motor control for the enclosure shutter axis.
+  rpc V1DisableEnclosureShutterAxis (EmptyRequest) returns (V1Status);
+  // Command the shutter to open using optional motion overrides.
+  rpc V1OpenEnclosureShutter (V1MotionOverrides) returns (V1Status);
+  // Command the shutter to close using optional motion overrides.
+  rpc V1CloseEnclosureShutter (V1MotionOverrides) returns (V1Status);
+  // Stop the shutter axis immediately or gracefully based on overrides.
+  rpc V1StopEnclosureShutter (V1MotionOverrides) returns (V1Status);
+  // Synchronize the current enclosure window frame axis to match the mount.
+  rpc V1SyncEnclosureWindowAxisToMount (EmptyRequest) returns (V1Status);
+
+  // Enable motor control for the rotator.
+  rpc V1EnableRotator (V1RotatorRequest) returns (V1Status);
+  // Disable motor control for the rotator.
+  rpc V1DisableRotator (V1RotatorRequest) returns (V1Status);
+  // Moves the rotator to the specified position.
+  rpc V1GotoRotatorMechanicalPosition (V1GotoRotatorRequest) returns (V1Status);
+  // Moves the rotator to a specified sky angle and continuously rotates to maintain the orientation
+  rpc V1GotoRotatorSkyAngle (V1GotoRotatorSkyAngleRequest) returns (V1Status);
+  // Stops any ongoing rotator movement.
+  rpc V1StopRotator (V1RotatorRequest) returns (V1Status);
+
+  // Enable motor control for the focuser.
+  rpc V1EnableFocuser (V1FocuserRequest) returns (V1Status);
+  // Disable motor control for the focuser.
+  rpc V1DisableFocuser (V1FocuserRequest) returns (V1Status);
+  // Moves the focuser to the specified position.
+  rpc V1GotoFocuserPosition (V1GotoFocuserPositionRequest) returns (V1Status);
+  // Stops any ongoing focuser movement.
+  rpc V1StopFocuser (V1FocuserRequest) returns (V1Status);
 }
 
-// Request message for streaming axes status updates.
-message AxesStatusRequest {
+// Configuration service allows setting default parameters for devices.
+service ConfigurationService {
+  // Set the default motion configuration for mount axes.
+  rpc V1SetDefaultMountMotionParameters (V1MountMotionParameters) returns (V1Status);
+  // Set the default motion configuration for enclosure axes.
+  rpc V1SetDefaultEnclosureMotionParameters (V1EnclosureMotionParameters) returns (V1Status);
+  // Set the default motion configuration for focuser axis.
+  rpc V1SetDefaultFocuserMotionParameters (V1FocuserMotionParameters) returns (V1Status);
+  // Set the default motion configuration for rotator axis.
+  rpc V1SetDefaultRotatorMotionParameters (V1RotatorMotionParameters) returns (V1Status);
+  // Sets the active clock source used for system time synchronization.
+  // This allows switching between sources like PTP, GPS, PPS, or NTP based on availability and precision requirements.
+  rpc V1SetClockSource (V1ChangeClockSourceRequest) returns (V1Status);
+}
+
+// MountModelService allows manipulation and updating of the mount’s pointing model.
+service MountModelService {
+  // Adds a new model point used to refine pointing accuracy.
+  rpc V1AddPoint (V1PointRequest) returns (V1Status);
+  // Removes an existing model point.
+  rpc V1RemovePoint (V1PointRequest) returns (V1Status);
+  // Updates the data of a specific model point by index.
+  rpc V1UpdatePoint (V1UpdatePointRequest) returns (V1Status);
+  // Returns the current mount model points
+  rpc V1GetModel (EmptyRequest) returns (V1MountModelResponse);
+  // Replaces the entire pointing model with a new set of points.
+  rpc V1UpdateModel (V1UpdateModelRequest) returns (V1Status);
+  // Send a PointXP pointing model file
+  // Overwrites the pointing model from edge controller with a custom model for all low level sdk interactions until edge controller is restarted
+  rpc V1OverwriteModelFromPointXP (TextRequest) returns (V1Status);
+}
+
+message EmptyRequest {}
+
+message TextRequest {
+  string content = 1;
+}
+
+// Overrides for motion commands.
+message V1MotionOverrides {
+  // Desired maximum velocity in encoder counts per second.
+  optional double target_velocity_counts_per_sec = 1;
+  // Acceleration rate in encoder counts per second squared.
+  optional double acceleration_counts_per_sec = 2;
+  // Deceleration rate in encoder counts per second squared.
+  optional double deceleration_counts_per_sec = 3;
+}
+message V1GotoMountCoordinatesRequest {
+  // Parameters for primary axis motion.
+  optional V1MotionOverrides primary_axis = 1;
+  // Parameters for secondary axis motion.
+  optional V1MotionOverrides secondary_axis = 2;
+  // Goto coordinates in a topocentric reference frame
+  optional V1TopocentricCoordinates topocentric = 3;
+  // Goto coordinates in a eme2000 reference frame
+  optional V1EME2000Coordinates eme2000 = 4;
+}
+
+message V1TopocentricCoordinates {
+  // Topocentric azimuth in radians.
+  optional double topocentric_az = 1;
+  // Topocentric elevation in radians.
+  optional double topocentric_el = 2;
+
+}
+message V1EME2000Coordinates {
+  // Right ascension in the EME2000 celestial frame.
+  optional double eme2000_ra = 1;
+  // Declination in the EME2000 celestial frame.
+  optional double eme2000_dec = 2;
+}
+
+message V1RotatorRequest {
+  // The identifier of the rotator when there is more than one present in the observatory
+  int32 id = 1;
+}
+
+message V1GotoRotatorRequest {
+  // The identifier of the rotator when there is more than one present in the observatory
+  int32 id = 1;
+  // The absolute mechanical rotator position in radians
+  double position_radians = 2;
+}
+
+message V1GotoRotatorSkyAngleRequest {
+  // The identifier of the rotator when there is more than one present in the observatory
+  int32 id = 1;
+  // The sky angle the rotator should move to in radians
+  double sky_angle_radians = 2;
+}
+
+message V1FocuserRequest {
+  // The identifier of the focuser when there is more than one present in the observatory
+  int32 id = 1;
+}
+
+message V1GotoFocuserPositionRequest {
+  // The identifier of the focuser when there is more than one present in the observatory
+  int32 id = 1;
+  // If true, the supplied position value will be a relative position and added to the current focuser position.
+  // If false, the supplied position will be an absolute mechanical focuser position.
+  bool is_relative = 2;
+  double position = 3;
+}
+
+enum V1StopType {
+  // Graceful stop using deceleration motion parameters
+  V1_STOP_TYPE_DEFAULT = 0;
+  // Full stop by immediately engaging brakes if present and disabling the axis if brakes engaged
+  V1_STOP_TYPE_EMERGENCY = 1;
+}
+
+// Request to change the observatory's active clock source.
+message V1ChangeClockSourceRequest {
+  // The desired clock source to use for system time synchronization.
+  V1ClockSource source = 1;
+}
+
+enum V1ClockSource {
+  // Precision Time Protocol (IEEE 1588) — ideal for sub-microsecond synchronization
+  // over local networks. Requires network hardware and switches that support PTP.
+  V1_CLOCK_SOURCE_PTP = 0;
+  // Global Positioning System — uses an external GPS receiver to discipline the system clock.
+  // GPS can provide accurate time even in isolated environments, but requires an outdoor antenna
+  // with clear sky visibility and may introduce higher latency than PTP.
+  V1_CLOCK_SOURCE_GPS = 1;
+  // Pulse-Per-Second (PPS) — typically derived from a GPS receiver or atomic clock.
+  // Provides highly stable timing signals, often used in combination with NMEA or other time sources
+  // to discipline the system clock. PPS requires hardware support and low-jitter signal handling.
+  V1_CLOCK_SOURCE_PPS = 2;
+  // Network Time Protocol — standard internet-based time sync method with millisecond-level precision.
+  // Easy to set up and broadly compatible, but less precise and more susceptible to network jitter
+  // compared to PTP or GPS.
+  V1_CLOCK_SOURCE_NTP = 3;
+}
+
+message V1AxisStop {
+  // Type of stop to perform.
+  V1StopType stop_type = 1;
+  // Optional override for motion parameters.
+  // If not set the default motion parameters set via the Configuration Service is used.
+  optional V1MotionOverrides motion_overrides = 2;
+}
+
+message V1StopMountRequest {
+  // Optional override for primary axis motion parameters.
+  // If not set the default motion parameters set via the Configuration Service is used.
+  optional V1AxisStop primary_axis = 1;
+  // Optional override for secondary axis motion parameters.
+  // If not set the default motion parameters set via the Configuration Service is used.
+  optional V1AxisStop secondary_axis = 2;
+}
+
+message V1ParkMountRequest {
+  // Optional override for primary axis motion parameters.
+  // If not set the default motion parameters set via the Configuration Service is used.
+  optional V1MotionOverrides primary_axis = 1;
+  // Optional override for secondary axis motion parameters.
+  // If not set the default motion parameters set via the Configuration Service is used.
+  optional V1MotionOverrides secondary_axis = 2;
+}
+
+// Request message for streaming observatory status updates.
+message V1StreamObservatoryStatusRequest {
   // The minimum interval (in microseconds) between two messages.
   // If set to 0, messages will be produced as fast as the cyclic loop is executed;
   // typically 1000 hz, although this may vary depending on attached hardware
   int32 minimum_interval_microseconds = 1;
-
-  // Whether to include detailed status information for each axis.
-  bool include_detailed_axis_status = 2;
 }
 
-message MountOffsetRequest {
-  // If true, the supplied offset values will be added to existing offsets. 
+message V1ApplyMountOffsetsRequest {
+  // If true, the supplied offset values will be added to existing offsets.
   // If false, total offsets will be set to the specified values.
   bool is_relative = 1;
 
   // The offset to be applied to either or both axes.
   // For any axis without a value, the existing offset for that axis will
   // remain unchanged.
-  optional double mount_axis0_offset_radians = 2;
+  optional double mount_primary_offset_radians = 2;
 
-  optional double mount_axis1_offset_radians = 3;
+  optional double mount_secondary_offset_radians = 3;
 }
 
 // The `Status` type defines a logical error model that is suitable for
@@ -45,7 +260,7 @@ message MountOffsetRequest {
 //
 // You can find out more about this error model and how to work with it in the
 // [API Design Guide](https://cloud.google.com/apis/design/errors).
-message Status {
+message V1Status {
   // The status code, which should be an enum value of
   // [google.rpc.Code][google.rpc.Code].
   int32 code = 1;
@@ -60,32 +275,37 @@ message Status {
   repeated google.protobuf.Any details = 3;
 }
 
+message V1NamedAxisStatus {
+  int32 id = 1;
+  V1DetailedAxisStatus status = 2;
+}
+
 // Detailed status of an individual axis.
-message DetailedAxisStatus {
+message V1DetailedAxisStatus {
   // The actual encoder position, in counts.
   int32 position_actual_counts = 1;
 
-  // Target position of the servo loop in the drive, in encoder counts. 
+  // Target position of the servo loop in the drive, in encoder counts.
   // This value is generated by the motion profiler based on any active motion commands.
-  // For example, if the axis is at position 0 and a goto is commanded to position 100,000, this value will 
-  // equal various intermediate values from 0 to 100,000 during the movement based on the 
+  // For example, if the axis is at position 0 and a goto is commanded to position 100,000, this value will
+  // equal various intermediate values from 0 to 100,000 during the movement based on the
   // acceleration, deceleration, and maximum velocity settings used for the movement.
   int32 position_demand_counts = 2;
 
-  // The difference between the sampled encoder position and the demanded encoder position 
-  // during the current iteration of the servo loop. This value is fed back into the control loop, 
-  // and the system is always trying to drive this value to 0. Large values can indicate that the axis 
-  // is poorly tuned, the axis is being pushed/held out of place by an external disturbance or obstruction, 
+  // The difference between the sampled encoder position and the demanded encoder position
+  // during the current iteration of the servo loop. This value is fed back into the control loop,
+  // and the system is always trying to drive this value to 0. Large values can indicate that the axis
+  // is poorly tuned, the axis is being pushed/held out of place by an external disturbance or obstruction,
   // or the motor is incapable of moving the load at the commanded acceleration/velocity.
   int32 position_following_error_counts = 3;
 
   // The measured axis velocity during the last iteration of the servo loop, in encoder counts per second.
   int32 velocity_actual_counts_per_second = 4;
 
-  // The current desired velocity of the axis, in encoder counts per second, based on the motion 
-  // profile generated for the commanded move. If the current velocity is 0 and a large move is 
-  // commanded, the demanded velocity will rise (based on acceleration), potentially up to the 
-  // maximum commanded velocity, and then will fall to 0 (based on deceleration) as the axis 
+  // The current desired velocity of the axis, in encoder counts per second, based on the motion
+  // profile generated for the commanded move. If the current velocity is 0 and a large move is
+  // commanded, the demanded velocity will rise (based on acceleration), potentially up to the
+  // maximum commanded velocity, and then will fall to 0 (based on deceleration) as the axis
   // arrives at the final destination.
   int32 velocity_demand_counts_per_second = 5;
 
@@ -97,23 +317,23 @@ message DetailedAxisStatus {
 }
 
 // Status message containing information about multiple axes.
-message AxesStatus {
+message V1ObservatoryStatus {
   // The timestamp when the status was recorded
   google.protobuf.Timestamp timestamp = 1;
 
   // The raw angle of the mount’s primary (Azimuth/RA) axis, in radians.
-  double encoder_mount_axis0_radians = 2;
+  double encoder_mount_primary_radians = 2;
 
-  // The raw angle of the mount’s secondary (Altitude/Dec) axis, in radians.
-  double encoder_mount_axis1_radians = 3;
+  // The raw angle of the mount’s secondary (Elevation/Dec) axis, in radians.
+  double encoder_mount_secondary_radians = 3;
 
   // The computed apparent azimuth angle in radians, transformed from the encoder
   // position using the currently-loaded pointing model.
   double apparent_mount_azimuth_radians = 4;
 
-  // The computed apparent altitude angle in radians, transformed from the encoder
+  // The computed apparent elevation angle in radians, transformed from the encoder
   // position using the currently-loaded pointing model.
-  double apparent_mount_altitude_radians = 5;
+  double apparent_mount_elevation_radians = 5;
 
   // The computed J2000 right ascension, in radians.
   // Transformed from the encoder position using the currently-loaded pointing model and
@@ -126,8 +346,96 @@ message AxesStatus {
   double declination_j2000_radians = 7;
 
   // (Optional) Detailed status for the mount's primary (Azimuth/RA) axis.
-  optional DetailedAxisStatus mountAxis0 = 8;
+  optional V1DetailedAxisStatus mount_axis_primary = 8;
 
-  // (Optional) Detailed status for the mount's secondary (Altitude/Dec) axis.
-  optional DetailedAxisStatus mountAxis1 = 9;
+  // (Optional) Detailed status for the mount's secondary (Elevation/Dec) axis.
+  optional V1DetailedAxisStatus mount_axis_secondary = 9;
+
+  // (Optional) Detailed status for the enclosure's rotation axis.
+  optional V1DetailedAxisStatus enclosure_axis_rotation = 10;
+
+  // (Optional) Detailed status for the enclosure's window frame axis.
+  optional V1DetailedAxisStatus enclosure_axis_window = 11;
+
+  // (Optional) Detailed status for the enclosure's shutter axis.
+  optional V1DetailedAxisStatus enclosure_axis_shutter = 12;
+
+  // (Optional) Detailed status for all rotator axes.
+  repeated V1NamedAxisStatus rotator_axis = 13;
+
+  // (Optional) Detailed status for all focuser axes.
+  repeated V1NamedAxisStatus focuser_axis = 14;
+}
+
+// Contains a single model point used for calibration.
+message V1PointRequest {
+  // Right Ascension of the observed position (radians).
+  double right_ascension_radians = 1;
+  // Declination of the observed position (radians).
+  double declination_radians = 2;
+  // Local Sidereal Time at the time of observation.
+  double local_sidereal_time = 3;
+  // Julian Date of the observation.
+  double julian_day = 4;
+  // Encoder position for the azimuth/RA axis.
+  double theta_encoder = 5;
+  // Encoder position for the elevation/Dec axis.
+  double phi_encoder = 6;
+}
+
+// Update a model point by index with new parameters.
+message V1UpdatePointRequest {
+  // Index of the model point to update.
+  int32 index = 1;
+  // Right Ascension of the observed position (radians).
+  double right_ascension_radians = 2;
+  // Declination of the observed position (radians).
+  double declination_radians = 3;
+  double local_sidereal_time = 4;
+  // Julian Date of the observation.
+  double julian_day = 5;
+  // Encoder position for the azimuth/RA axis.
+  double theta_encoder = 6;
+  // Encoder position for the elevation/Dec axis.
+  double phi_encoder = 7;
+}
+
+// Response containing all points in the currently used mount model.
+message V1MountModelResponse {
+  // List of points in the current model.
+  repeated V1PointRequest points = 1;
+}
+
+// Request containing a complete list of pointing model points.
+message V1UpdateModelRequest {
+  // List of new points to replace the current model.
+  repeated V1PointRequest points = 1;
+}
+
+// Default mount motion settings.
+message V1MountMotionParameters {
+  // Default primary axis parameters.
+  optional V1MotionOverrides primary_axis = 1;
+  // Default secondary axis parameters.
+  optional V1MotionOverrides secondary_axis = 2;
+}
+
+// Default enclosure motion settings.
+message V1EnclosureMotionParameters {
+  // Default rotation parameters.
+  optional V1MotionOverrides rotation_axis = 1;
+  // Default window frame parameters.
+  optional V1MotionOverrides window_axis = 2;
+  // Default shutter movement parameters.
+  optional V1MotionOverrides shutter_axis = 3;
+}
+
+message V1FocuserMotionParameters {
+  int32 id = 1;
+  V1MotionOverrides focuser_axis = 2;
+}
+
+message V1RotatorMotionParameters {
+  int32 id = 1;
+  V1MotionOverrides rotator_axis = 2;
 }

@@ -6,11 +6,11 @@
 #include <iostream>
 
 int main() {
-    OSLowLevelSdkClient client("localhost:50051");
-    client.StreamAxesStatus(1000, true, [](oslowlevelsdk::AxesStatus status) {
+    OSLowLevelSdkClient client("localhost:50099");
+    client.StreamObservatoryStatus(1000, 1000, [](oslowlevelsdk::V1ObservatoryStatus status) {
         std::cout << "Timestamp: " << status.timestamp().seconds() << std::endl;
-        std::cout << "Encoder Azimuth: " << status.encoder_mount_axis0_radians() << " radians" << std::endl;
-        std::cout << "Encoder Elevation: " << status.encoder_mount_axis1_radians() << " radians" << std::endl;
+        std::cout << "Primary Mount Encoder: " << status.encoder_mount_primary_radians() << " radians" << std::endl;
+        std::cout << "Secondary Mount Encoder: " << status.encoder_mount_secondary_radians() << " radians" << std::endl;
         std::cout << "------------------------------------" << std::endl;
     });
 
