@@ -47,7 +47,7 @@ void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicrosecond
   request.set_minimum_interval_microseconds(minimumIntervalMicroseconds);
 
   grpc::ClientContext context;
-  context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(30));
+  context.set_deadline(std::chrono::system_clock::now() + std::chrono::minutes(120));
 
   grpc::CompletionQueue cq;
 
@@ -81,7 +81,6 @@ void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicrosecond
     }
 
     if (gotTag == reinterpret_cast<void *>(2)) {
-      std::cout << "Timestamp: " << response.timestamp().seconds() << std::endl;
       callback(response);
     }
   }
