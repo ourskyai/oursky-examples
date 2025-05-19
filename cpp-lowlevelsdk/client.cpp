@@ -67,7 +67,7 @@ void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicrosecond
   oslowlevelsdk::V1ObservatoryStatus response;
   while (true) {
     reader->Read(&response, reinterpret_cast<void *>(2));
-    auto deadline = std::chrono::system_clock::now() + std::chrono::seconds(2);  // <- per-read timeout
+    auto deadline = std::chrono::system_clock::now() + std::chrono::milliseconds(timeoutMilliseconds);  // <- per-read timeout
     grpc::CompletionQueue::NextStatus status = cq.AsyncNext(&gotTag, &ok, deadline);
 
     if (status == grpc::CompletionQueue::TIMEOUT) {
