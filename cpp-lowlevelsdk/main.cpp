@@ -6,9 +6,9 @@
 #include <iostream>
 
 int main() {
-    OSLowLevelSdkClient client("localhost:50099");
+    OSLowLevelSdkClient client("INSERT_CONTROLLER_IP_HERE:50099");
     client.StreamObservatoryStatus(1000, 1000, [](oslowlevelsdk::V1ObservatoryStatus status) {
-        std::cout << "Timestamp: " << status.timestamp().seconds() << std::endl;
+        std::cout << "Timestamp: " << status.timestamp().seconds()  << "." << status.timestamp().nanos() << std::endl;
         std::cout << "Primary Mount Encoder: " << status.encoder_mount_primary_radians() << " radians" << std::endl;
         std::cout << "Secondary Mount Encoder: " << status.encoder_mount_secondary_radians() << " radians" << std::endl;
         std::cout << "------------------------------------" << std::endl;
