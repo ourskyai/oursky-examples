@@ -4,7 +4,7 @@
 
 ### Setup
 
-When connecting to the low level sdk it is recommended to trust the observable space root certificate.
+When connecting to the low level SDK it is recommended to trust the Observable Space root certificate.
 
 This can be done by running the following command:
 
@@ -19,7 +19,7 @@ sudo cp observable_space_root.pem /usr/local/share/ca-certificates/
 sudo update-ca-certificates
 ```
 
-If you cannot, or do not want to, trust the root certificate, you can also present the certificate when connecting to the sdk by uncommenting line 26 in the file `client.cpp`
+If you cannot, or do not want to, trust the root certificate, you can also present the certificate when connecting with the SDK.
 
 ### Build
 
@@ -36,4 +36,8 @@ cmake ..
 make
 ```
 
+### Running
 
+```
+./grpc_client <controller_ip> --controller-id <controller_id> --cert-dir <controller_certs>
+```

@@ -18,23 +18,23 @@ std::string readPemFile(const std::string& file_path) {
                        std::istreambuf_iterator<char>());
 }
 
-OSLowLevelSdkClient::OSLowLevelSdkClient(const std::string &serverAddress) {
+OSLowLevelSdkClient::OSLowLevelSdkClient(const std::string &serverAddress, const std::string &rootCertPath, const std::string &clientCertPath, const std::string &clientKeyPath, const std::string &controllerId) {
     grpc::SslCredentialsOptions sslOptions;
 
     // Optional: if you cannot add the observable space root cert to the system
     // Load the server's cert (as a trusted root)
-    sslOptions.pem_root_certs = readPemFile("/home/connor/git/github.com/oursky/oursky-examples/cpp-lowlevelsdk/oursky_root.crt");
+    sslOptions.pem_root_certs = readPemFile(rootCertPath);
 
     // Load the client's cert chain and private key (for mutual TLS)
-    sslOptions.pem_cert_chain = readPemFile("/home/connor/git/github.com/oursky/oursky-examples/cpp-lowlevelsdk/client_cert.pem");
-    sslOptions.pem_private_key = readPemFile("/home/connor/git/github.com/oursky/oursky-examples/cpp-lowlevelsdk/client_key.pem");
+    sslOptions.pem_cert_chain = readPemFile(clientCertPath);
+    sslOptions.pem_private_key = readPemFile(clientKeyPath);
 
     // Set SSL Credentials for mutual TLS
     auto credentials = grpc::SslCredentials(sslOptions);
 
     // Override target name if cert CN or SAN differs from actual address
     grpc::ChannelArguments args;
-    args.SetSslTargetNameOverride("9190cf50-1373-4910-b549-cb9caa99b283.nodes.prod.oursky.ai");
+    args.SetSslTargetNameOverride(controllerId + ".nodes.prod.oursky.ai");
 
     auto channel = grpc::CreateCustomChannel(serverAddress, credentials, args);
     this->stub = oslowlevelsdk::ObservatoryService::NewStub(channel);
@@ -47,8 +47,6 @@ void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicrosecond
   request.set_minimum_interval_microseconds(minimumIntervalMicroseconds);
 
   grpc::ClientContext context;
-  // Set a timeout
-  // context.set_deadline(std::chrono::system_clock::now() + std::chrono::minutes(120));
 
   grpc::CompletionQueue cq;
 
@@ -62,6 +60,15 @@ void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicrosecond
   cq.Next(&gotTag, &ok);
   if (!ok || gotTag != reinterpret_cast<void *>(1)) {
     std::cerr << "Failed to initialize stream" << std::endl;
+
+    grpc::Status finishStatus;
+    reader->Finish(&finishStatus, reinterpret_cast<void *>(3));
+    cq.Next(&gotTag, &ok);
+
+    if (!finishStatus.ok()) {
+      std::cerr << "Stream ended with error: " << finishStatus.error_message() << std::endl;
+    }
+
     return;
   }
 
