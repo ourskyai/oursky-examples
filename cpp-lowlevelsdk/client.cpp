@@ -47,7 +47,8 @@ void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicrosecond
   request.set_minimum_interval_microseconds(minimumIntervalMicroseconds);
 
   grpc::ClientContext context;
-  context.set_deadline(std::chrono::system_clock::now() + std::chrono::minutes(120));
+  // Set a timeout
+  // context.set_deadline(std::chrono::system_clock::now() + std::chrono::minutes(120));
 
   grpc::CompletionQueue cq;
 
