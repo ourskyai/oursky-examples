@@ -14,6 +14,14 @@ set(CMAKE_VERBOSE_MAKEFILE ON)
 include(FetchContent)
 set(FETCHCONTENT_QUIET OFF)
 
+# Add CLI11
+FetchContent_Declare(
+    cli11
+    GIT_REPOSITORY https://github.com/CLIUtils/CLI11.git
+    GIT_TAG v2.4.1
+)
+FetchContent_MakeAvailable(cli11)
+
 add_subdirectory(cmake/dependencies/grpc)
 
 add_subdirectory(protos)
@@ -30,6 +38,7 @@ add_executable(grpc_client ${SOURCES})
 
 target_link_libraries(grpc_client PUBLIC
     llsdk-grpc-gen
+    CLI11::CLI11
 )
 
 target_include_directories(grpc_client PUBLIC
