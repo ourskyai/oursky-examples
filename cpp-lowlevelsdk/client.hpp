@@ -11,7 +11,7 @@ private:
     std::unique_ptr<oslowlevelsdk::ObservatoryService::Stub> stub;
 
 public:
-    explicit OSLowLevelSdkClient(const std::string& server_address);
+    explicit OSLowLevelSdkClient(const std::string& server_address, const std::string& rootCertPath, const std::string& clientCertPath, const std::string& clientKeyPath, const std::string &controllerId);
 
     void StreamObservatoryStatus(int minimumIntervalMicroseconds, int timeoutMilliseconds, const std::function<void(oslowlevelsdk::V1ObservatoryStatus)>& callback);
 };
