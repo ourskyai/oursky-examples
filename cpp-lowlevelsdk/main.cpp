@@ -2,11 +2,77 @@
 #include <iostream>
 #include <cstdio>
 #include <chrono>
+#include <thread>
 #include <filesystem>
+#include <cmath>
 #include <CLI/CLI.hpp>
 
+void runOffsetDemo(OSLowLevelSdkClient& client, double offsetAmplitudeArcsec, int offsetIntervalMicrosec)
+{
+    double amplitudeRadians = offsetAmplitudeArcsec / 3600.0 * M_PI / 180;
+
+    while (true) {
+        std::cout << "Offsetting by " << amplitudeRadians << ", 0" << std::endl;
+        client.ApplyMountOffsets(false, amplitudeRadians, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMicrosec));
+
+        std::cout << "Offsetting by " << amplitudeRadians << ", " << amplitudeRadians << std::endl;
+        client.ApplyMountOffsets(false, amplitudeRadians, amplitudeRadians);
+        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMicrosec));
+
+        std::cout << "Offsetting by " << "0, " << amplitudeRadians << std::endl;
+        client.ApplyMountOffsets(false, 0, amplitudeRadians);
+        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMicrosec));
+
+        std::cout << "Offsetting by " << "0, 0" << std::endl;
+        client.ApplyMountOffsets(false, 0, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMicrosec));
+    }
+}
+
+void runStreamingDemo(OSLowLevelSdkClient& client, int minIntervalMicrosec, int timeoutMillisec)
+{
+    std::cout << "# NumReceivedMessages, DC Time (seconds since 1970), Received time (seconds since 1970), DC Timestamp Age (msec), DC Timestamp Interval (msec), Receive time interval (msec), Azimuth, Altitude\n";
+
+    double lastDcTimestampSeconds = 0;
+    double lastReceiveTimeSeconds = 0;
+    int messageCount = 0;
+    client.StreamObservatoryStatus(minIntervalMicrosec, timeoutMillisec,
+            [&lastDcTimestampSeconds, &lastReceiveTimeSeconds, &messageCount](oslowlevelsdk::V1ObservatoryStatus status) {
+        auto receivedAtSystemTime = std::chrono::system_clock::now();
+        auto receivedAtSystemTimeSeconds = std::chrono::duration<double>(receivedAtSystemTime.time_since_epoch()).count();
+
+        double messageDcTimestampSeconds = status.timestamp().seconds() + (status.timestamp().nanos() / 1000000000.0);
+
+        double timestampAgeMsec = (receivedAtSystemTimeSeconds - messageDcTimestampSeconds) * 1000;
+
+        if (lastDcTimestampSeconds > 0) {
+            double messageTimestampIntervalMsec = (messageDcTimestampSeconds - lastDcTimestampSeconds) * 1000;
+            double receiveTimeIntervalMsec = (receivedAtSystemTimeSeconds - lastReceiveTimeSeconds) * 1000;
+
+            double azDegs = status.apparent_mount_azimuth_radians() * 180 / 3.14159;
+            double altDegs = status.apparent_mount_elevation_radians() * 180 / 3.14159;
+            
+            printf("%d, %.6f, %.6f, %.3f, %.3f, %.3f, %.4f, %.4f\n",
+                    messageCount,
+                    messageDcTimestampSeconds,
+                    receivedAtSystemTimeSeconds,
+                    timestampAgeMsec,
+                    messageTimestampIntervalMsec,
+                    receiveTimeIntervalMsec,
+                    azDegs,
+                    altDegs
+                    );
+        }
+
+        messageCount++;
+        lastDcTimestampSeconds = messageDcTimestampSeconds;
+        lastReceiveTimeSeconds = receivedAtSystemTimeSeconds;
+    });
+}
+
 int main(int argc, char *argv[]) {
-    CLI::App app{"gRPC Client for Observatory Status"};
+    CLI::App app{"gRPC Client for Observatory API"};
     app.formatter(std::make_shared<CLI::Formatter>());
 
     std::string serverAddress;
@@ -34,6 +100,15 @@ int main(int argc, char *argv[]) {
         "openssl x509 -in client_cert.pem -noout -text | grep nodeControllerId\n"
     )->required();
 
+    bool demoOffsets = false;
+    app.add_flag("--demo-offsets", demoOffsets, "Run offset demo");
+
+    double offsetAmplitudeArcsec = 10;
+    app.add_option("--offset-amplitude", offsetAmplitudeArcsec, "Ampltiude of offsets (arcsec)");
+
+    int offsetIntervalMicrosec = 500;
+    app.add_option("--offset-interval", offsetIntervalMicrosec, "Interval between offsets (microseconds)");
+
     CLI11_PARSE(app, argc, argv);
 
     std::string rootCertPath = certRootPath + "/root_cert.pem";
@@ -60,36 +135,12 @@ int main(int argc, char *argv[]) {
     std::cerr << "Connecting to " << serverAddressWithPort << "..." << std::endl;
     OSLowLevelSdkClient client(serverAddressWithPort, rootCertPath, clientCertPath, clientKeyPath, controllerId);
 
-    std::cout << "# NumReceivedMessages, DC Time (seconds since 1970), Received time (seconds since 1970), DC Timestamp Age (msec), DC Timestamp Interval (msec), Receive time interval (msec)\n";
-
-    double lastDcTimestampSeconds = 0;
-    double lastReceiveTimeSeconds = 0;
-    int messageCount = 0;
-    client.StreamObservatoryStatus(minIntervalMicrosec, timeoutMillisec,
-            [&lastDcTimestampSeconds, &lastReceiveTimeSeconds, &messageCount](oslowlevelsdk::V1ObservatoryStatus status) {
-        auto receivedAtSystemTime = std::chrono::system_clock::now();
-        auto receivedAtSystemTimeSeconds = std::chrono::duration<double>(receivedAtSystemTime.time_since_epoch()).count();
-
-        double messageDcTimestampSeconds = status.timestamp().seconds() + (status.timestamp().nanos() / 1000000000.0);
-
-        double timestampAgeMsec = (receivedAtSystemTimeSeconds - messageDcTimestampSeconds) * 1000;
-
-        if (lastDcTimestampSeconds > 0) {
-            double messageTimestampIntervalMsec = (messageDcTimestampSeconds - lastDcTimestampSeconds) * 1000;
-            double receiveTimeIntervalMsec = (receivedAtSystemTimeSeconds - lastReceiveTimeSeconds) * 1000;
-            printf("%d, %.6f, %.6f, %.3f, %.3f, %.3f\n",
-                    messageCount,
-                    messageDcTimestampSeconds,
-                    receivedAtSystemTimeSeconds,
-                    timestampAgeMsec,
-                    messageTimestampIntervalMsec,
-                    receiveTimeIntervalMsec
-                    );
-        }
-        messageCount++;
-        lastDcTimestampSeconds = messageDcTimestampSeconds;
-        lastReceiveTimeSeconds = receivedAtSystemTimeSeconds;
-    });
+    if (demoOffsets) {
+        runOffsetDemo(client, offsetAmplitudeArcsec, offsetIntervalMicrosec);
+    }
+    else {
+        runStreamingDemo(client, minIntervalMicrosec, timeoutMillisec);
+    }    
 
     return 0;
 }
