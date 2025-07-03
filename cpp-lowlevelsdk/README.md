@@ -27,14 +27,24 @@ To build the sample application, you need to have the following dependencies ins
 - CMake
 - C++ compiler (g++, clang++, etc.)
 
+For Ubuntu and similar distributions, try installing the following:
+
+```bash
+sudo apt-get install cmake g++ libssl-dev
+```
+
 To build the sample application, run the following commands:
 
 ```bash
 mkdir build
 cd build
 cmake ..
-make
+make -j8
 ```
+
+Note that the cmake step may take several minutes (depending on your network connection) as the gRPC library source and dependencies are downloaded, and
+the make step might also take 10-20 minutes the first time as these libraries 
+are compiled.
 
 ### Running
 

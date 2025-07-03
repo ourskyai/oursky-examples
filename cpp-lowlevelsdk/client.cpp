@@ -19,25 +19,25 @@ std::string readPemFile(const std::string& file_path) {
 }
 
 OSLowLevelSdkClient::OSLowLevelSdkClient(const std::string &serverAddress, const std::string &rootCertPath, const std::string &clientCertPath, const std::string &clientKeyPath, const std::string &controllerId) {
-    grpc::SslCredentialsOptions sslOptions;
+  grpc::SslCredentialsOptions sslOptions;
 
-    // Optional: if you cannot add the observable space root cert to the system
-    // Load the server's cert (as a trusted root)
-    sslOptions.pem_root_certs = readPemFile(rootCertPath);
+  // Optional: if you cannot add the observable space root cert to the system
+  // Load the server's cert (as a trusted root)
+  sslOptions.pem_root_certs = readPemFile(rootCertPath);
 
-    // Load the client's cert chain and private key (for mutual TLS)
-    sslOptions.pem_cert_chain = readPemFile(clientCertPath);
-    sslOptions.pem_private_key = readPemFile(clientKeyPath);
+  // Load the client's cert chain and private key (for mutual TLS)
+  sslOptions.pem_cert_chain = readPemFile(clientCertPath);
+  sslOptions.pem_private_key = readPemFile(clientKeyPath);
 
-    // Set SSL Credentials for mutual TLS
-    auto credentials = grpc::SslCredentials(sslOptions);
+  // Set SSL Credentials for mutual TLS
+  auto credentials = grpc::SslCredentials(sslOptions);
 
-    // Override target name if cert CN or SAN differs from actual address
-    grpc::ChannelArguments args;
-    args.SetSslTargetNameOverride(controllerId + ".nodes.prod.oursky.ai");
+  // Override target name if cert CN or SAN differs from actual address
+  grpc::ChannelArguments args;
+  args.SetSslTargetNameOverride(controllerId + ".nodes.prod.oursky.ai");
 
-    auto channel = grpc::CreateCustomChannel(serverAddress, credentials, args);
-    this->stub = oslowlevelsdk::ObservatoryService::NewStub(channel);
+  auto channel = grpc::CreateCustomChannel(serverAddress, credentials, args);
+  this->stub = oslowlevelsdk::ObservatoryService::NewStub(channel);
 }
 
 void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicroseconds, int timeoutMilliseconds,
@@ -103,4 +103,18 @@ void OSLowLevelSdkClient::StreamObservatoryStatus(int minimumIntervalMicrosecond
   }
 
   cq.Shutdown();
+}
+
+void OSLowLevelSdkClient::ApplyMountOffsets(bool isRelative, double primaryOffsetRadians, double secondaryOffsetRadians) {
+  oslowlevelsdk::V1ApplyMountOffsetsRequest request;
+  request.set_is_relative(isRelative);
+  request.set_mount_primary_offset_radians(primaryOffsetRadians);
+  request.set_mount_secondary_offset_radians(secondaryOffsetRadians);
+
+  grpc::ClientContext context;
+  context.set_deadline(std::chrono::system_clock::now() + std::chrono::seconds(10));
+  oslowlevelsdk::V1Status response;
+  grpc::Status status = stub->V1ApplyMountOffsets(&context, request, &response);
+
+  std::cout << "GRPC Status Code: " << status.error_code() << ", Response code: " << response.code() << std::endl;
 }
