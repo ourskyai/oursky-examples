@@ -7,26 +7,26 @@
 #include <cmath>
 #include <CLI/CLI.hpp>
 
-void runOffsetDemo(OSLowLevelSdkClient& client, double offsetAmplitudeArcsec, int offsetIntervalMicrosec)
+void runOffsetDemo(OSLowLevelSdkClient& client, double offsetAmplitudeArcsec, int offsetIntervalMillisec)
 {
     double amplitudeRadians = offsetAmplitudeArcsec / 3600.0 * M_PI / 180;
 
     while (true) {
         std::cout << "Offsetting by " << amplitudeRadians << ", 0" << std::endl;
         client.ApplyMountOffsets(false, amplitudeRadians, 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMicrosec));
+        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMillisec));
 
         std::cout << "Offsetting by " << amplitudeRadians << ", " << amplitudeRadians << std::endl;
         client.ApplyMountOffsets(false, amplitudeRadians, amplitudeRadians);
-        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMicrosec));
+        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMillisec));
 
         std::cout << "Offsetting by " << "0, " << amplitudeRadians << std::endl;
         client.ApplyMountOffsets(false, 0, amplitudeRadians);
-        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMicrosec));
+        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMillisec));
 
         std::cout << "Offsetting by " << "0, 0" << std::endl;
         client.ApplyMountOffsets(false, 0, 0);
-        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMicrosec));
+        std::this_thread::sleep_for(std::chrono::milliseconds(offsetIntervalMillisec));
     }
 }
 
@@ -106,8 +106,8 @@ int main(int argc, char *argv[]) {
     double offsetAmplitudeArcsec = 10;
     app.add_option("--offset-amplitude", offsetAmplitudeArcsec, "Ampltiude of offsets (arcsec)");
 
-    int offsetIntervalMicrosec = 500;
-    app.add_option("--offset-interval", offsetIntervalMicrosec, "Interval between offsets (microseconds)");
+    int offsetIntervalMillisec = 500;
+    app.add_option("--offset-interval", offsetIntervalMillisec, "Interval between offsets (milliseconds)");
 
     CLI11_PARSE(app, argc, argv);
 
@@ -136,7 +136,7 @@ int main(int argc, char *argv[]) {
     OSLowLevelSdkClient client(serverAddressWithPort, rootCertPath, clientCertPath, clientKeyPath, controllerId);
 
     if (demoOffsets) {
-        runOffsetDemo(client, offsetAmplitudeArcsec, offsetIntervalMicrosec);
+        runOffsetDemo(client, offsetAmplitudeArcsec, offsetIntervalMillisec);
     }
     else {
         runStreamingDemo(client, minIntervalMicrosec, timeoutMillisec);
