@@ -1,0 +1,19 @@
+include "Mat.fbs";
+include "ImageStatistics.fbs";
+include "ImageMetadata.fbs";
+include "PlateSolveResult.fbs";
+
+namespace hwdaemon;
+
+file_identifier "OSSP";
+
+table ImageResult {
+  raw_bytes: [uint8];
+  plate_solve_result: PlateSolveResult;
+  ml_processing_result: [uint8];
+  classical_processing_result: [uint8];
+  statistics: ImageStatistics;
+  metadata: ImageMetadata;
+}
+
+root_type ImageResult;
