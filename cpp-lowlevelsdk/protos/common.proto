@@ -1,0 +1,60 @@
+syntax = "proto3";
+
+package common;
+
+import "google/protobuf/any.proto";
+
+option java_multiple_files = true;
+option java_package = "ai.oursky.grpc.client.common";
+
+message V1MountModelReplaceRequest {
+  message MountModelReplacePoint {
+    string name = 1;
+    string date = 2;
+    double declination_radians = 3;
+    double julian_day = 4;
+    double local_sidereal_time = 5;
+    double phi_encoder = 6;
+    double right_ascension_radians = 7;
+    double theta_encoder = 8;
+    string time = 9;
+    bool used = 10;
+  }
+
+  message MountInfo {
+    bool is_alt_az = 1;
+    bool is_gem = 2;
+    bool is_positive_altitude_up = 3;
+    bool is_positive_azimuth_clockwise = 4;
+    double phi_counts_per_rev = 5;
+    double theta_counts_per_rev = 6;
+  }
+
+  message ObservingConditions {
+    double pressure_mbar = 1;
+    double temperature_c = 2;
+  }
+
+  message ScaleFactors {
+    double phi = 1;
+    double theta = 2;
+  }
+
+  message SiteInfo {
+    double latitude_degrees = 1;
+    double longitude_degrees = 2;
+  }
+
+  message Options {
+    bool enable_refraction = 1;
+    double maximum_sensitivity = 2;
+  }
+
+  repeated MountModelReplacePoint points = 1;
+  MountInfo mount_info = 2;
+  ObservingConditions observing_conditions = 3;
+  ScaleFactors scale_factors = 4;
+  SiteInfo site_info = 5;
+  Options options = 6;
+  repeated bool terms_used = 7;
+}
