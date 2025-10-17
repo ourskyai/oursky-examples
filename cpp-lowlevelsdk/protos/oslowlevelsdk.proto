@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package oslowlevelsdk;
 
-import "common/common.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
 
@@ -100,7 +99,7 @@ service MountModelService {
   rpc V1UpdateModel (V1UpdateModelRequest) returns (V1Status);
   // Send a complete mount model exported from PointXP
   // Overwrites the pointing model from edge controller with a custom model for all low level sdk interactions until edge controller is restarted
-  rpc V1ReplaceModel (common.V1MountModelReplaceRequest) returns (V1Status);
+  rpc V1ReplaceModel (V1MountModelReplaceRequest) returns (V1Status);
 }
 
 message EmptyRequest {}
