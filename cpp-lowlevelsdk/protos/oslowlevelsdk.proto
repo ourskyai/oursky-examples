@@ -1,9 +1,10 @@
 syntax = "proto3";
 
+package oslowlevelsdk;
+
+import "common/common.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/timestamp.proto";
-
-package oslowlevelsdk;
 
 // Service defining low-level access to the system's observatory.
 service ObservatoryService {
@@ -97,9 +98,9 @@ service MountModelService {
   rpc V1GetModel (EmptyRequest) returns (V1MountModelResponse);
   // Replaces the entire pointing model with a new set of points.
   rpc V1UpdateModel (V1UpdateModelRequest) returns (V1Status);
-  // Send a PointXP pointing model file
+  // Send a complete mount model exported from PointXP
   // Overwrites the pointing model from edge controller with a custom model for all low level sdk interactions until edge controller is restarted
-  rpc V1OverwriteModelFromPointXP (TextRequest) returns (V1Status);
+  rpc V1ReplaceModel (common.V1MountModelReplaceRequest) returns (V1Status);
 }
 
 message EmptyRequest {}
@@ -365,6 +366,8 @@ message V1ObservatoryStatus {
 
   // (Optional) Detailed status for all focuser axes.
   repeated V1NamedAxisStatus focuser_axis = 14;
+
+  int64 total_loops = 15;
 }
 
 // Contains a single model point used for calibration.
