@@ -40,6 +40,8 @@ To generate for other languages, modify the command from the [Makefile](Makefile
 ```shell
 . venv/bin/activate && openapi-generator-cli generate -i consumer/openapi.yaml -g <INSERT-YOUR-DESIRED-SERVER-TYPE> -o consumer/generated
 ```
+**Note**: The generator does not always include the latest language or package versions in the generated code. Take liberty in using your preferred newer language version or dependencies after initial generation.
+
 
 ### Running the Example
 ```shell

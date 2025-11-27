@@ -1,4 +1,4 @@
-# Makefile for OpenAPI Consumer Service
+# Makefile for Custom Image Processing Consumer
 
 # Variables
 PYTHON := python3
