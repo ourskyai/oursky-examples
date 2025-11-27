@@ -1,0 +1,106 @@
+openapi: 3.0.3
+info:
+  description: API specification for processing images. Implemented by custom image
+    processing container.
+  title: Custom Image Processing Webhook API
+  version: 1.0.0
+servers:
+- description: Custom Image Processing Container
+  url: http://localhost:8099
+paths:
+  /custom-image-processing/v1/images:
+    post:
+      description: Called when a new image is available for processing. The primary
+        image processing worker waits for the response to determine if the image was
+        processed and where it was saved.
+      operationId: processImage
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/processImage_request"
+        required: true
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/processImage_200_response"
+          description: Image processed successfully
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid request payload. JSON schema validation failed.
+        "422":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Invalid image data. Image could not be processed.
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Internal server error
+      summary: Process new image
+components:
+  schemas:
+    Error:
+      example:
+        error: Invalid image path format
+      properties:
+        error:
+          description: Error message
+          example: Invalid image path format
+          title: error
+          type: string
+      title: Error
+      type: object
+    processImage_request:
+      properties:
+        rawImagePath:
+          description: Absolute path to the raw image file on local storage
+          example: /data/shared/raw_images/img_abc123.fits
+          title: rawImagePath
+          type: string
+        processedImageOutputDir:
+          description: Path to directory where the processed image should be saved.
+            The custom worker should save the processed image in this directory if
+            it is to be used in the primary image processing pipeline.
+          example: /data/shared/processed_images/
+          title: processedImageOutputDir
+          type: string
+        timeoutSeconds:
+          description: Number of seconds the custom worker has to process the image.
+            The primary worker will wait this long for a response before giving up
+            and moving on to send the next image. The image is not guaranteed to be
+            available on disk after this timeout. The timeout is a product of the
+            framerate and hardware resource limitations.
+          example: 0.016
+          exclusiveMinimum: true
+          format: double
+          minimum: 0
+          title: timeoutSeconds
+          type: number
+      required:
+      - rawImagePath
+      - timeoutSeconds
+      title: processImage_request
+      type: object
+    processImage_200_response:
+      example:
+        processedImagePath: /data/shared/processed_images/img_abc123.fits
+      properties:
+        processedImagePath:
+          description: Path where the processed image was saved. This allows the image
+            to be used in the primary image processing pipeline. Should be null if
+            processed image is not meant to be used in the primary pipeline.
+          example: /data/shared/processed_images/img_abc123.fits
+          nullable: true
+          title: processedImagePath
+          type: string
+      title: processImage_200_response
+      type: object
