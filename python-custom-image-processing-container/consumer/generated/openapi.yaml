@@ -46,6 +46,25 @@ paths:
                 $ref: "#/components/schemas/Error"
           description: Internal server error
       summary: Process new image
+  /health:
+    get:
+      description: Simple health check to verify that the custom image processing
+        container is running.
+      operationId: healthCheck
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/healthCheck_200_response"
+          description: Service is healthy
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+          description: Service is unhealthy
+      summary: Health check endpoint
 components:
   schemas:
     Error:
@@ -103,4 +122,15 @@ components:
           title: processedImagePath
           type: string
       title: processImage_200_response
+      type: object
+    healthCheck_200_response:
+      example:
+        status: OK
+      properties:
+        status:
+          description: Health status message
+          example: OK
+          title: status
+          type: string
+      title: healthCheck_200_response
       type: object

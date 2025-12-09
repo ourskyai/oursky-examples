@@ -24,6 +24,7 @@ from fastapi import (  # noqa: F401
 
 from openapi_server.models.extra_models import TokenModel  # noqa: F401
 from openapi_server.models.error import Error
+from openapi_server.models.health_check200_response import HealthCheck200Response
 from openapi_server.models.process_image200_response import ProcessImage200Response
 from openapi_server.models.process_image_request import ProcessImageRequest
 
@@ -54,3 +55,21 @@ async def process_image(
     if not BaseDefaultApi.subclasses:
         raise HTTPException(status_code=500, detail="Not implemented")
     return await BaseDefaultApi.subclasses[0]().process_image(process_image_request)
+
+
+@router.get(
+    "/health",
+    responses={
+        200: {"model": HealthCheck200Response, "description": "Service is healthy"},
+        500: {"model": Error, "description": "Service is unhealthy"},
+    },
+    tags=["default"],
+    summary="Health check endpoint",
+    response_model_by_alias=True,
+)
+async def health_check(
+) -> HealthCheck200Response:
+    """Simple health check to verify that the custom image processing container is running."""
+    if not BaseDefaultApi.subclasses:
+        raise HTTPException(status_code=500, detail="Not implemented")
+    return await BaseDefaultApi.subclasses[0]().health_check()

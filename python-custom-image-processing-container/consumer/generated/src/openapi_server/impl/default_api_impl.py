@@ -1,6 +1,7 @@
 from openapi_server.apis.default_api_base import BaseDefaultApi
 from openapi_server.models.process_image200_response import ProcessImage200Response
 from openapi_server.models.process_image_request import ProcessImageRequest
+from openapi_server.models.health_check200_response import HealthCheck200Response
 
 from astropy.io import fits
 import os
@@ -54,3 +55,6 @@ class DefaultApiImpl(BaseDefaultApi):
         return ProcessImage200Response(
             processed_image_path=processed_image_path
         )
+
+    async def health_check(self):
+        return HealthCheck200Response(status="OK")
