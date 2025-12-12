@@ -15,3 +15,5 @@ FROM python:3.13 AS service
 WORKDIR /root/app/site-packages
 COPY --from=builder /venv /venv
 ENV PATH=/venv/bin:$PATH
+
+CMD ["uvicorn", "openapi_server.main:app", "--host", "0.0.0.0", "--port", "8099"]

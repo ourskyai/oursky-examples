@@ -29,6 +29,7 @@ make generate
 This generates the server stub and Docker Compose configuration.
 
 **Note:** This will overwrite the included example Dockerfile, Docker Compose, and requirements.txt. Use this if you need to start from scratch or generate for a new language.
+However, retain the originals for comparison. Your container must have a default entrypoint defined.
 
 To see other available languages for server stub generation, use the list command and scroll to the `SERVER generators` section:
 ```shell
