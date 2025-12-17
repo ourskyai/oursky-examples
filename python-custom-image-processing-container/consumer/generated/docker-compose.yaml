@@ -9,5 +9,5 @@ services:
       - "8099:8099"
     command: uvicorn openapi_server.main:app --host 0.0.0.0 --port 8099
     volumes:
-      - /data/custom_processing/raw:/data/custom_processing/raw:ro
-      - /data/custom_processing/processed:/data/custom_processing/processed:rw
+      - /tmp/custom_image_processing/raw:/tmp/custom_image_processing/raw:ro
+      - /tmp/custom_image_processing/processed:/tmp/custom_image_processing/processed:rw
