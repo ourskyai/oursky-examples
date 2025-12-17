@@ -27,11 +27,11 @@ paths:
                 rawImagePath:
                   type: string
                   description: Absolute path to the raw image file on local storage
-                  example: "/data/shared/raw_images/img_abc123.fits"
+                  example: "/tmp/custom_image_processing/raw/img_abc123.fits"
                 processedImageOutputDir:
                   type: string
                   description: Path to directory where the processed image should be saved. The custom worker should save the processed image in this directory if it is to be used in the primary image processing pipeline.
-                  example: "/data/shared/processed_images/"
+                  example: "/tmp/custom_image_processing/processed/"
                 timeoutSeconds:
                   type: number
                   format: double
@@ -51,7 +51,7 @@ paths:
                     type: string
                     nullable: true
                     description: Path where the processed image was saved. This allows the image to be used in the primary image processing pipeline. Should be null if processed image is not meant to be used in the primary pipeline.
-                    example: "/data/shared/processed_images/img_abc123.fits"
+                    example: "/tmp/custom_image_processing/processed/img_abc123.fits"
         '400':
           description: Invalid request payload. JSON schema validation failed.
           content:

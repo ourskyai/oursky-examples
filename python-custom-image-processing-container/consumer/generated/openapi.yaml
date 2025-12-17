@@ -82,14 +82,14 @@ components:
       properties:
         rawImagePath:
           description: Absolute path to the raw image file on local storage
-          example: /data/shared/raw_images/img_abc123.fits
+          example: /tmp/custom_image_processing/raw/img_abc123.fits
           title: rawImagePath
           type: string
         processedImageOutputDir:
           description: Path to directory where the processed image should be saved.
             The custom worker should save the processed image in this directory if
             it is to be used in the primary image processing pipeline.
-          example: /data/shared/processed_images/
+          example: /tmp/custom_image_processing/processed
           title: processedImageOutputDir
           type: string
         timeoutSeconds:
@@ -111,13 +111,13 @@ components:
       type: object
     processImage_200_response:
       example:
-        processedImagePath: /data/shared/processed_images/img_abc123.fits
+        processedImagePath: /tmp/custom_image_processing/processed/img_abc123.fits
       properties:
         processedImagePath:
           description: Path where the processed image was saved. This allows the image
             to be used in the primary image processing pipeline. Should be null if
             processed image is not meant to be used in the primary pipeline.
-          example: /data/shared/processed_images/img_abc123.fits
+          example: /tmp/custom_image_processing/processed/img_abc123.fits
           nullable: true
           title: processedImagePath
           type: string
