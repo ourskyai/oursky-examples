@@ -52,7 +52,7 @@ make run
 This builds and runs the container with volumes for receiving and writing data to and from the primary image processing pipeline on the Edge Controller.
 
 
-# Archiving the container image for upload to the Edge Controller device.
+## Archiving the container image for upload to the Edge Controller device.
 
 ```shell
 # List available docker images
