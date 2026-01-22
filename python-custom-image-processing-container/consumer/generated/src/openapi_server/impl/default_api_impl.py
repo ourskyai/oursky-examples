@@ -23,7 +23,6 @@ class DefaultApiImpl(BaseDefaultApi):
                 if len(hdul) == 0:
                     raise RuntimeError("FITS file contains no HDUs")
 
-                # Find compressed image HDUs (similar to Kotlin CompressedImageHDU handling)
                 compressed_hdus = [hdu for hdu in hdul if isinstance(hdu, CompImageHDU)]
 
                 if len(compressed_hdus) > 1:
@@ -34,8 +33,6 @@ class DefaultApiImpl(BaseDefaultApi):
                     image_hdu = compressed_hdus[0]
                     image_data = image_hdu.data
                     header = image_hdu.header
-                    is_compressed = True
-                    print("Found compressed image HDU")
                 else:
                     # Find the HDU with image data (primary HDU may be empty)
                     image_data = None
@@ -45,13 +42,12 @@ class DefaultApiImpl(BaseDefaultApi):
                             image_data = hdu.data
                             header = hdu.header
                             break
-                    is_compressed = False
 
                 if image_data is None:
                     raise RuntimeError("No image data found in FITS file")
 
                 # Blackout box algorithm: zero out the center 10% of the image
-                print(f"Opened FITS image (compressed: {is_compressed})")
+                print(f"Opened FITS image")
 
                 processed_data = image_data.copy()
 
