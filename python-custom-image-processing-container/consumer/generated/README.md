@@ -62,7 +62,7 @@ To manage the custom image processing pipeline you will need to the IP address o
 curl -i -X POST 'http://<YOUR_EDGE_CONTROLLER_IP>:9080/node-platform/v1/custom-image-processing/container?imageFriendlyName=<YOUR_ARCHIVE_NAME_FROM_INSTRUCTIONS_ABOVE>>&active=true&sha256Checksum=<YOUR_CHECKSUM_FROM_INSTRUCTIONS_ABOVE>' \
   -H 'Authorization: Bearer raw-id-token' \
   -H 'Content-Type: application/octet-stream' \
-  -T /home/matt/<YOUR_ARCHIVE_FILENAME>.tar
+  -T /<FULL_PAHT_TO_IMAGE>/<YOUR_ARCHIVE_FILENAME>.tar
 
 
 # Get All Containers
