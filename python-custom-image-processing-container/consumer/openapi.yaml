@@ -1,0 +1,106 @@
+openapi: 3.0.3
+info:
+  title: Custom Image Processing Webhook API
+  description: API specification for processing images. Implemented by custom image processing container.
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:8099
+    description: Custom Image Processing Container
+
+paths:
+  /custom-image-processing/v1/images:
+    post:
+      summary: Process new image
+      description: Called when a new image is available for processing. The primary image processing worker waits for the response to determine if the image was processed and where it was saved.
+      operationId: processImage
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - rawImagePath
+                - timeoutSeconds
+              properties:
+                rawImagePath:
+                  type: string
+                  description: Absolute path to the raw image file on local storage
+                  example: "/tmp/custom_image_processing/raw/img_abc123.fits"
+                processedImageOutputDir:
+                  type: string
+                  description: Path to directory where the processed image should be saved. The custom worker should save the processed image in this directory if it is to be used in the primary image processing pipeline.
+                  example: "/tmp/custom_image_processing/processed/"
+                timeoutSeconds:
+                  type: number
+                  format: double
+                  minimum: 0
+                  exclusiveMinimum: true
+                  description: Number of seconds the custom worker has to process the image. The primary worker will wait this long for a response before giving up and moving on to send the next image. The image is not guaranteed to be available on disk after this timeout. The timeout is a product of the framerate and hardware resource limitations.
+                  example: 0.016
+      responses:
+        '200':
+          description: Image processed successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  processedImagePath:
+                    type: string
+                    nullable: true
+                    description: Path where the processed image was saved. This allows the image to be used in the primary image processing pipeline. Should be null if processed image is not meant to be used in the primary pipeline.
+                    example: "/tmp/custom_image_processing/processed/img_abc123.fits"
+        '400':
+          description: Invalid request payload. JSON schema validation failed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Invalid image data. Image could not be processed.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+  /health:
+    get:
+      summary: Health check endpoint
+      description: Simple health check to verify that the custom image processing container is running.
+      operationId: healthCheck
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    description: Health status message
+                    example: "OK"
+        '500':
+          description: Service is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+
+components:
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Invalid image path format"
