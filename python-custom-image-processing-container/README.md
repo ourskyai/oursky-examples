@@ -57,7 +57,7 @@ A container may be activated or deactivated using the PUT update request below.
 
 ```shell
 # Create One Container
-# The friendly name can be anything you want, but we reocmmend using the archive name and version.
+# The friendly name can be anything you want, but we recommend using the archive name and version.
 curl -i -X POST 'http://<YOUR_EDGE_CONTROLLER_IP>:9080/node-platform/v1/custom-image-processing/container?imageFriendlyName=<YOUR_ARCHIVE_NAME_FROM_INSTRUCTIONS_ABOVE>>&active=true&sha256Checksum=<YOUR_CHECKSUM_FROM_INSTRUCTIONS_ABOVE>' \
   -H 'Authorization: Bearer raw-id-token' \
   -H 'Content-Type: application/octet-stream' \
