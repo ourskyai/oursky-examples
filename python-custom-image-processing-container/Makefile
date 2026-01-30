@@ -37,9 +37,14 @@ generate: install
 		-g python-fastapi \
 		-o $(GENERATED_DIR)
 
+build:
+	docker buildx create --name multiarch --use || true
+	docker buildx build --platform linux/arm64 -t custom-image-processing:latest --load .
+
+
 # Run Docker containers
-run:
-	cd $(GENERATED_DIR) && docker compose up --build
+run: build
+	cd $(GENERATED_DIR) && docker compose up
 
 # Clean up generated files and virtual environment
 clean:

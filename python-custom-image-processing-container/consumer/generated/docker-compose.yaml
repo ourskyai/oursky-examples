@@ -1,9 +1,13 @@
 version: '3.6'
 services:
   service:
+    image: custom-image-processing:latest
     build:
       context: .
       target: service
+      platforms:
+        - linux/arm64
+    platform: linux/arm64
     user: "1000:1000"
     ports:
       - "8099:8099"
