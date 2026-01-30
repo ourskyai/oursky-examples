@@ -16,7 +16,7 @@ What does the example consumer do?
 The example algorithm takes the image passed by the Edge Controller and applies a black box to the center of the image. This is an example to demonstrate the format of the FITS file as well as a simple form of image manipulation.
 
 
-### Running the Example
+### Building and Running the Example
 ```shell
 make run
 ```
