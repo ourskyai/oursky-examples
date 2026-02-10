@@ -10,7 +10,7 @@ Uses the OurSky Node Platform Python SDK to fetch and display the system status 
 pip install -r requirements.txt
 ```
 
-2. Copy `.env.example` to `.env` and set your API token:
+2. Copy `.env.example` to `.env` and set your API token (required), Lineage ID (required), and optionally the API base url.
 
 ```bash
 cp .env.example .env
