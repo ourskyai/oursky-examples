@@ -1,11 +1,11 @@
 openapi: 3.0.3
 info:
-  description: API specification for processing images. Implemented by custom image
-    processing container.
-  title: Custom Image Processing Webhook API
+  description: API specification for processing images. Implemented by a custom image
+    processing plugin.
+  title: Image Processing Plugin Webhook API
   version: 1.0.0
 servers:
-- description: Custom Image Processing Container
+- description: Image Processing Plugin
   url: http://localhost:8099
 paths:
   /custom-image-processing/v1/images:
@@ -48,8 +48,8 @@ paths:
       summary: Process new image
   /health:
     get:
-      description: Simple health check to verify that the custom image processing
-        container is running.
+      description: Simple health check to verify that the custom processing
+        plugin is running.
       operationId: healthCheck
       responses:
         "200":
