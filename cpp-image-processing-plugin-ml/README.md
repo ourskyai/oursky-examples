@@ -33,8 +33,18 @@ MODEL_PATH=<PATH_TO_REPO>/oursky-examples/cpp-image-processing-plugin-ml/third-p
 ```
 3. *Optional:*  Test the API
 ```bash
-scripts/test_api.sh
+$ scripts/test_api.sh
+Image: /tmp/test_image.fits
+
+{"results":[{"confidence":0.41808655858039856,"index":832,"label":"studio couch"},{"confidence":0.09788050502538681,"index":709,"label":"pedestal"},{"confidence":0.042704567313194275,"index":886,"label":"velvet"},{"confidence":0.014561401680111885,"index":766,"label":"rocking chair"},{"confidence":0.013115948997437954,"index":786,"label":"seat belt"}]}Results:
+    0.4181  studio couch
+    0.0979  pedestal
+    0.0427  velvet
+    0.0146  rocking chair
+    0.0131  seat belt
 ```
+The test script will grab an image from the qualcomm examples dir, convert it to fits. 
+
 4. Build the runtime dockerfile. `scripts/build.sh`. The Dockerfile at `docker/Dockerfile.snpe-run` copies in relevant libraries to run SNPE in docker.
 5. Deploy the model to device.
 

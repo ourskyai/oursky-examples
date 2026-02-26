@@ -10,7 +10,7 @@ TEST_IMAGE="${TEST_IMAGE:-/tmp/test_image.fits}"
 # Generate a test FITS file if one doesn't already exist
 if [ ! -f "$TEST_IMAGE" ]; then
     echo "Generating test FITS image..."
-    python3 "${SCRIPT_DIR}/generate_test_fits.py" "$TEST_IMAGE" 512 512
+    python3 "${SCRIPT_DIR}/generate_test_fits.py" "$TEST_IMAGE"
     echo ""
 fi
 
