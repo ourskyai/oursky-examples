@@ -1,0 +1,27 @@
+# Build artifacts
+build/
+cmake-build-debug/
+.cache/
+.git/
+.idea/
+
+# SNPE SDK — keep only include/, aarch64-oe-linux-gcc11.2, and hexagon-v73
+third-party/snpe-sdk/*/docs/
+third-party/snpe-sdk/*/examples/
+third-party/snpe-sdk/*/benchmarks/
+third-party/snpe-sdk/*/bin/
+third-party/snpe-sdk/*/share/
+third-party/snpe-sdk/*/lib/python/
+third-party/snpe-sdk/*/lib/aarch64-android/
+third-party/snpe-sdk/*/lib/aarch64-oe-linux-gcc8.2/
+third-party/snpe-sdk/*/lib/aarch64-oe-linux-gcc9.3/
+third-party/snpe-sdk/*/lib/aarch64-ubuntu-gcc9.4/
+third-party/snpe-sdk/*/lib/aarch64-windows-msvc/
+third-party/snpe-sdk/*/lib/arm64x-windows-msvc/
+third-party/snpe-sdk/*/lib/android/
+third-party/snpe-sdk/*/lib/x86_64-*/
+third-party/snpe-sdk/*/lib/hexagon-v66/
+third-party/snpe-sdk/*/lib/hexagon-v68/
+third-party/snpe-sdk/*/lib/hexagon-v69/
+third-party/snpe-sdk/*/lib/hexagon-v75/
+third-party/snpe-sdk/*/lib/hexagon-v79/
