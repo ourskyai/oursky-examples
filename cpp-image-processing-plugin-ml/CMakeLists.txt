@@ -54,7 +54,6 @@ FetchContent_MakeAvailable(Crow nlohmann_json)
 # --- Server executable ---
 add_executable(${PROJECT_NAME}
     consumer/cpp/src/main.cpp
-    consumer/cpp/src/routes.cpp
     consumer/cpp/src/image_processor.cpp
     consumer/cpp/src/snpe_worker.cpp
 )
