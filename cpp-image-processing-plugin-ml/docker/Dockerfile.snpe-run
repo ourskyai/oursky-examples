@@ -1,0 +1,60 @@
+# ── Build stage ──────────────────────────────────────────────────────
+# Compiles the C++ Crow server against the SNPE SDK for aarch64.
+FROM ubuntu:22.04 AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential cmake git pkg-config zlib1g-dev libcfitsio-dev ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# SNPE SDK — only headers and OE Linux aarch64 libs (not the full 2.9 GB SDK)
+COPY third-party/snpe-sdk/2.28.2.241116/include/ \
+     third-party/snpe-sdk/2.28.2.241116/include/
+COPY third-party/snpe-sdk/2.28.2.241116/lib/aarch64-oe-linux-gcc11.2/ \
+     third-party/snpe-sdk/2.28.2.241116/lib/aarch64-oe-linux-gcc11.2/
+
+# Project sources
+COPY CMakeLists.txt .
+COPY cmake/ cmake/
+COPY consumer/cpp/src/ consumer/cpp/src/
+
+RUN cmake -B build -DCMAKE_BUILD_TYPE=Release \
+    && cmake --build build -j$(nproc)
+
+# ── Runtime stage ────────────────────────────────────────────────────
+FROM ubuntu:22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libstdc++6 libatomic1 zlib1g libcfitsio9 \
+    && rm -rf /var/lib/apt/lists/*
+
+# SNPE runtime — CPU
+COPY third-party/snpe-sdk/2.28.2.241116/lib/aarch64-oe-linux-gcc11.2/libSNPE.so \
+     /usr/lib/
+
+# SNPE runtime — DSP/HTP (sm8550 = hexagon-v73)
+COPY third-party/snpe-sdk/2.28.2.241116/lib/aarch64-oe-linux-gcc11.2/libSnpeHtpPrepare.so \
+     /usr/lib/
+COPY third-party/snpe-sdk/2.28.2.241116/lib/aarch64-oe-linux-gcc11.2/libSnpeHtpV73Stub.so \
+     /usr/lib/
+COPY third-party/snpe-sdk/2.28.2.241116/lib/hexagon-v73/unsigned/libSnpeHtpV73Skel.so \
+     /opt/hexagon/
+
+# Server binary
+COPY --from=builder /build/build/custom-image-processing /usr/local/bin/
+
+# Models and labels
+COPY prerequisites/models/inception_v3.dlc /opt/models/
+COPY prerequisites/models/inception_v3_quantized.dlc /opt/models/
+COPY prerequisites/imagenet_slim_labels.txt /opt/models/
+
+ENV MODEL_PATH=/opt/models/inception_v3.dlc \
+    LABELS_PATH=/opt/models/imagenet_slim_labels.txt \
+    SNPE_RUNTIME=cpu \
+    PORT=8099 \
+    LD_LIBRARY_PATH=/usr/lib \
+    ADSP_LIBRARY_PATH="/opt/hexagon;/system/lib/rfsa/adsp;/dsp"
+
+EXPOSE 8099
+CMD ["custom-image-processing"]
