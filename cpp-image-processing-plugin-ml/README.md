@@ -4,7 +4,7 @@
 
 In order to make use of Qualcomm's integrated Tensor Processing unit (TPU) on the Observable Space Edge Controller, users need to make use of the Qualcomm [SNPE Framework](https://docs.qualcomm.com/doc/80-63442-10/topic/SNPE_general_overview.html)
 
-This example demonstrates how to construct an image processing plugin that leverages ML accelerators on the Edge Controller device. It implements a C++ HTTP Server that will handles webhook event nofications and process images taken.
+This example demonstrates how to construct an image processing plugin that leverages ML accelerators on the Edge Controller device. It implements a C++ HTTP Server that will handle webhook event nofications and process images taken.
 
 ## OpenAPI Spec
 
@@ -47,8 +47,6 @@ The test script will grab an image from the qualcomm examples dir, convert it to
 
 4. Build the runtime dockerfile. `scripts/build.sh`. The Dockerfile at `docker/Dockerfile.snpe-run` copies in relevant libraries to run SNPE in docker.
 5. Deploy the model to device.
-
-
 
 ## Customizing the example
 
