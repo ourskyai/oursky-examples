@@ -59,6 +59,8 @@ int main() {
 
     CROW_ROUTE(app, "/custom-image-processing/v1/images")
         .methods(crow::HTTPMethod::POST)([&worker](const crow::request& req) {
+            std::cerr << "Request body: " << req.body << std::endl;
+
             ProcessImageRequest request;
             try {
                 request = nlohmann::json::parse(req.body).get<ProcessImageRequest>();
@@ -76,7 +78,15 @@ int main() {
                 request.timeout_seconds);
 
             if (!result.success) {
+                std::cerr << "Processing failed: " << result.error << std::endl;
                 return error_response(422, result.error);
+            }
+
+            std::cerr << "Predictions for " << request.raw_image_path << ":" << std::endl;
+            for (const auto& c : result.classifications) {
+                std::cerr << "  " << c["label"].get<std::string>()
+                          << " (index=" << c["index"] << ", confidence="
+                          << c["confidence"] << ")" << std::endl;
             }
 
             ProcessImageResponse response;

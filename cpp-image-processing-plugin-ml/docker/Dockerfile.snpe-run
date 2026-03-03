@@ -57,4 +57,4 @@ ENV MODEL_PATH=/opt/models/inception_v3.dlc \
     ADSP_LIBRARY_PATH="/opt/hexagon;/system/lib/rfsa/adsp;/dsp"
 
 EXPOSE 8099
-CMD ["custom-image-processing"]
+ENTRYPOINT ["/usr/local/bin/custom-image-processing"]
