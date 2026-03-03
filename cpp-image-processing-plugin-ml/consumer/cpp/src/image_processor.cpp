@@ -49,8 +49,20 @@ struct FitsFile {
 static FitsImage read_fits_image(const std::string& path) {
     FitsFile fits(path);
 
+    // If the primary HDU is empty (NAXIS==0), move to the first image HDU.
+    // This handles compressed FITS files where the image is in an extension.
     int naxis = 0;
     fits_get_img_dim(fits.fptr, &naxis, &fits.status);
+    if (fits.status == 0 && naxis == 0) {
+        int hdutype = 0;
+        fits.status = 0;
+        fits_movabs_hdu(fits.fptr, 2, &hdutype, &fits.status);
+        if (fits.status) {
+            throw std::runtime_error(
+                "Primary HDU has no image data and no image extension found");
+        }
+        fits_get_img_dim(fits.fptr, &naxis, &fits.status);
+    }
     if (fits.status || naxis < 2) {
         throw std::runtime_error(
             "FITS image must be at least 2D (got " + std::to_string(naxis) + "D)");
