@@ -17,8 +17,19 @@ The example algorithm takes the image passed by the Edge Controller and applies 
 
 
 ### Building and Running the Example
+
+Build and run locally for testing (builds for host architecture):
 ```shell
 make run
+```
+
+Or build separately:
+```shell
+# Build for local testing (host architecture)
+make build
+
+# Build for deployment to Edge Controller (ARM64)
+make build-deploy
 ```
 
 This builds and runs the container with volumes for receiving and writing data to and from the primary image processing pipeline on the Edge Controller.
@@ -26,33 +37,37 @@ This builds and runs the container with volumes for receiving and writing data t
 
 ## Archiving the container image for upload to the Edge Controller device.
 
+First, build the image for the ARM64 Edge Controller platform:
+```shell
+make build-deploy
+```
+
+Then verify and archive:
 ```shell
 # List available docker images
 docker image ls
                                                                                                 i Info →   U  In Use
 IMAGE                                                               ID             DISK USAGE   CONTENT SIZE   EXTRA
 custom-image-processing:latest                                      129b00b9ab08       1.35GB             0B    U
-something-elsee:latest                                              397c01d3ce17       1.50GB             0B    U
+something-else:latest                                              397c01d3ce17       1.50GB             0B    U
 
-# Copy the ID of your image processing image
-
-# Archive the image to the .tar file of your choice
-# You may use any name, but the file should be a .tar archive
-docker save <your-image-id> >  custom-image-proc.tar
+# Archive the image to a .tar file
+docker save custom-image-processing > custom-image-processing.tar
 
 # Generate the sha256sum hash for the file. This is needed for upload.
-sha256sum custom-image-proc.tar
-39542b25225a60553aa15b6185b0e3ff26fa1e70005e31dcb1c53ec0d6cdd006  custom-image-proc.tar
+sha256sum custom-image-processing.tar
+39542b25225a60553aa15b6185b0e3ff26fa1e70005e31dcb1c53ec0d6cdd006  custom-image-processing.tar
 ```
 
 ## Managing the plugin on your Edge Controller Device
 
-To manage the custom image processing pipeline you will need the IP address of your Edge Controller on your local network.
+To manage the custom image processing pipeline you will need the IP address of your Edge Controller on your local network. The Edge Controller web UI is available at `http://<YOUR_EDGE_CONTROLLER_IP>:9080`. Navigate to the **Settings** tab to upload, enable, disable, or delete plugins.
 
 Only one plugin may be registered with the system at a time. To upload a new plugin, first delete the old one.
 
-A plugin may be activated or deactivated using the PUT update request below.
+A plugin may be activated or deactivated using the web UI toggle or the PUT update request below.
 
+### API
 
 ```shell
 # Create One Plugin
@@ -67,7 +82,8 @@ curl -i -X POST 'http://<YOUR_EDGE_CONTROLLER_IP>:9080/node-platform/v1/image-pr
 curl -X GET 'http://<YOUR_EDGE_CONTROLLER_IP>:9080/node-platform/v1/image-processing/plugins/' \
   -H 'Authorization: Bearer raw-id-token'
 
-# Get One Plugin By ID
+# Disable Plugin
+# Leaves the image in place for quick re-enable later.
 curl -i -X PUT 'http://<YOUR_EDGE_CONTROLLER_IP>:9080/node-platform/v1/image-processing/plugin' \
   -H 'Authorization: Bearer raw-id-token' \
   -H 'Content-Type: application/json' \
@@ -76,20 +92,16 @@ curl -i -X PUT 'http://<YOUR_EDGE_CONTROLLER_IP>:9080/node-platform/v1/image-pro
     "active": false
   }'
 
-
-# Update One Plugin By ID
-# You can use this feature to enable or disable your plugin, while leaving the image in place for quick use later.
-# A value of active: true will instruct the Edge Controller to pass images to the plugin
-# A value of active: false will instruct the Edge Controller to skip passing images to the plugin
+# Enable Plugin
 curl -i -X PUT 'http://<YOUR_EDGE_CONTROLLER_IP>:9080/node-platform/v1/image-processing/plugin' \
   -H 'Authorization: Bearer raw-id-token' \
   -H 'Content-Type: application/json' \
   -d '{
     "pluginId": "<THE_ID_OF_YOUR_PLUGIN_FROM_THE_GET_ALL_ENDPOINT_ABOVE>",
-    "active": false
+    "active": true
   }'
 
-# Delete One Container By ID
+# Delete One Plugin By ID
 curl -X DELETE 'http://<YOUR_EDGE_CONTROLLER_IP>:9080/node-platform/v1/image-processing/plugin' \
   -H 'Authorization: Bearer raw-id-token' \
   -H 'Content-Type: application/json' \
