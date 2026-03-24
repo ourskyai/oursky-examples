@@ -46,7 +46,7 @@ build:
 # Build for deployment (ARM64 Edge Controller)
 build-deploy:
 	docker buildx create --name multiarch --use || true
-	docker buildx build --platform linux/arm64 -t custom-image-processing:latest --load $(GENERATED_DIR)
+	docker buildx build --platform linux/arm64 -t custom-image-processing-arm64:latest --load $(GENERATED_DIR)
 
 # Run Docker containers
 run: build

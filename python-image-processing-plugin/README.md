@@ -51,12 +51,12 @@ IMAGE                                                               ID          
 custom-image-processing:latest                                      129b00b9ab08       1.35GB             0B    U
 something-else:latest                                              397c01d3ce17       1.50GB             0B    U
 
-# Archive the image to a .tar file
-docker save custom-image-processing > custom-image-processing.tar
+# Archive the deployment image to a .tar file
+docker save custom-image-processing-arm64 > custom-image-processing-arm64.tar
 
 # Generate the sha256sum hash for the file. This is needed for upload.
-sha256sum custom-image-processing.tar
-39542b25225a60553aa15b6185b0e3ff26fa1e70005e31dcb1c53ec0d6cdd006  custom-image-processing.tar
+sha256sum custom-image-processing-arm64.tar
+39542b25225a60553aa15b6185b0e3ff26fa1e70005e31dcb1c53ec0d6cdd006  custom-image-processing-arm64.tar
 ```
 
 ## Managing the plugin on your Edge Controller Device
