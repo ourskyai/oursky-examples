@@ -10,13 +10,15 @@ OPENAPI_SPEC := consumer/openapi.yaml
 GENERATED_DIR := consumer/generated
 
 # Phony targets (not actual files)
-.PHONY: help install generate run clean venv
+.PHONY: help install generate build build-deploy run clean venv
 
 # Default target
 help:
 	@echo "Available targets:"
 	@echo "  install    - Create virtual environment and install dependencies"
 	@echo "  generate   - Generate FastAPI code from OpenAPI spec"
+	@echo "  build      - Build Docker image for local testing (host architecture)"
+	@echo "  build-deploy - Build Docker image for deployment (ARM64)"
 	@echo "  run        - Build and run Docker containers"
 	@echo "  clean      - Remove virtual environment and generated code"
 	@echo "  venv       - Create virtual environment only"
@@ -37,10 +39,14 @@ generate: install
 		-g python-fastapi \
 		-o $(GENERATED_DIR)
 
+# Build for local testing (host architecture)
 build:
-	docker buildx create --name multiarch --use || true
-	docker buildx build --platform linux/arm64 -t custom-image-processing:latest --load .
+	docker build -t custom-image-processing:latest --load $(GENERATED_DIR)
 
+# Build for deployment (ARM64 Edge Controller)
+build-deploy:
+	docker buildx create --name multiarch --use || true
+	docker buildx build --platform linux/arm64 -t custom-image-processing-arm64:latest --load $(GENERATED_DIR)
 
 # Run Docker containers
 run: build
