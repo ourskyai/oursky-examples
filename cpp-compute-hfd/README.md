@@ -1,4 +1,4 @@
-# ARGUS HFD Demo
+# HFD Computation Demo
 
 Self-contained demonstration of HFD (Half-Flux Diameter) computation for star images.
 
@@ -19,7 +19,7 @@ brew install opencv
 ```bash
 mkdir build && cd build
 cmake ..
-make demo_argus
+make compute_hfd_demo
 ```
 
 ## Run
@@ -27,7 +27,7 @@ make demo_argus
 From the build directory:
 
 ```bash
-./test/argus_demo/demo_argus
+./compute_hfd_demo
 ```
 
 ## What it does

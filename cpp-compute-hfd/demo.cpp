@@ -7,7 +7,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 
-#include "demo_argus_hfd_utils.hpp"
+#include "hfd_utils.hpp"
 
 cv::Mat makeGaussianStar(double sigma) {
   const int size = 100;
