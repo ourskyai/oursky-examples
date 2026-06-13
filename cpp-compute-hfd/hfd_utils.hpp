@@ -116,18 +116,79 @@ inline std::vector<double> computeSigmaClipping(const std::vector<double>& data,
   return clippedData;
 }
 
+// Helper: Compute weight for a pixel's contribution to star metrics
+// Returns (pixelValue - backgroundLevel) if pixelValue > inclusionThreshold and weight > 0, else 0.0
+// This is used consistently across centroid and FWHM calculations
+inline double computeWeight(double pixelValue, double inclusionThreshold, double backgroundLevel) {
+  // Only include pixels above threshold
+  if (pixelValue <= inclusionThreshold) {
+    return 0.0;
+  }
+
+  // Weight by (intensity - background), not (intensity - threshold)
+  double weight = pixelValue - backgroundLevel;
+
+  // Ensure weight is positive
+  if (weight <= 0.0) {
+    return 0.0;
+  }
+
+  return weight;
+}
+
+// Helper: Compute total flux and collect pixels within aperture
+struct ApertureData {
+  double totalFlux;
+  std::vector<std::pair<double, float>> pixelsByDistance;  // (distance, flux)
+};
+
+inline ApertureData collectAperturePixels(const cv::Mat& floatMat, const cv::Point2f& centroid, double maxRadius) {
+  ApertureData data;
+  data.totalFlux = 0.0;
+
+  for (int y = 0; y < floatMat.rows; y++) {
+    for (int x = 0; x < floatMat.cols; x++) {
+      float pixel = floatMat.at<float>(y, x);
+      double dx = (x + 0.5) - centroid.x;
+      double dy = (y + 0.5) - centroid.y;
+      double dist = std::sqrt(dx * dx + dy * dy);
+      if (dist <= maxRadius) {
+        data.totalFlux += pixel;
+        data.pixelsByDistance.push_back({dist, pixel});
+      }
+    }
+  }
+
+  return data;
+}
+
+// Forward declaration for overload
+inline BackgroundStats computeBackgroundStats(const cv::Mat& starRegion,
+                                               const cv::Point2f& center,
+                                               int minBackgroundRadius,
+                                               int maxBackgroundRadius);
+
 // Compute background statistics from circular annulus beyond star PSF
 // Samples pixels in annulus at radius [minRadius, maxRadius] from center
 inline BackgroundStats computeBackgroundStats(const cv::Mat& starRegion,
-                                               const cv::Point2f& center,
-                                               int minRadius = kMinBackgroundRadius,
-                                               int maxRadius = kMaxBackgroundRadius) {
-  // Create a ring mask between min/max radii
-  cv::Mat mask = cv::Mat::zeros(starRegion.size(), CV_8U);
-  cv::circle(mask, center, maxRadius, cv::Scalar(255), -1);  // Outer circle (filled)
-  cv::circle(mask, center, minRadius, cv::Scalar(0), -1);    // Inner circle (filled, erases center)
+                                               int minBackgroundRadius = kMinBackgroundRadius,
+                                               int maxBackgroundRadius = kMaxBackgroundRadius) {
+  const cv::Point2f center(starRegion.cols / 2.0f, starRegion.rows / 2.0f);
 
-  // Extract non-zero mask pixels
+  return computeBackgroundStats(starRegion, center, minBackgroundRadius, maxBackgroundRadius);
+}
+
+inline BackgroundStats computeBackgroundStats(const cv::Mat& starRegion,
+                                               const cv::Point2f& center,
+                                               int minBackgroundRadius,
+                                               int maxBackgroundRadius) {
+
+  // create a ring between the radius of min/max background radii
+  cv::Mat mask = cv::Mat::zeros(starRegion.size(), CV_8U);
+  cv::circle(mask, center, maxBackgroundRadius, cv::Scalar(255), -1);  // Outer circle (filled)
+  cv::circle(mask, center, minBackgroundRadius, cv::Scalar(0), -1);    // Inner circle (filled, erases center)
+
+  // Extract non-zero mask pixels using OpenCV
   std::vector<cv::Point> locations;
   cv::findNonZero(mask, locations);
 
@@ -171,7 +232,7 @@ inline cv::Point2f computeCentroid(const cv::Mat& starRegion,
     return cv::Point2f(starRegion.cols / 2.0f, starRegion.rows / 2.0f);
   }
 
-  const double threshold = background.level + backgroundStdDevMultiplier * background.stddev;
+  const double inclusionThreshold = background.level + backgroundStdDevMultiplier * background.stddev;
 
   double sumIntensity = 0.0;
   double sumX = 0.0;
@@ -179,92 +240,23 @@ inline cv::Point2f computeCentroid(const cv::Mat& starRegion,
 
   for (int y = 0; y < starRegion.rows; y++) {
     for (int x = 0; x < starRegion.cols; x++) {
-      double val = starRegion.at<uint16_t>(y, x);
-      if (val > threshold) {
-        double weight = val - background.level;
-        if (weight > 0.0) {
-          sumIntensity += weight;
-          sumX += weight * (x + 0.5);
-          sumY += weight * (y + 0.5);
-        }
+      double pixelValue = starRegion.at<uint16_t>(y, x);
+      double weight = computeWeight(pixelValue, inclusionThreshold, background.level);
+      if (weight > 0.0) {
+        sumIntensity += weight;
+        sumX += weight * (x + 0.5);  // Use pixel center
+        sumY += weight * (y + 0.5);
       }
     }
   }
 
   if (sumIntensity <= 0.0) {
+    // Return center of region if no pixels above threshold
     return cv::Point2f(starRegion.cols / 2.0f, starRegion.rows / 2.0f);
   }
 
   return cv::Point2f(static_cast<float>(sumX / sumIntensity),
                      static_cast<float>(sumY / sumIntensity));
-}
-
-// Compute HFD (Half-Flux Diameter) using pixel-by-pixel method
-// Diameter of circle containing 50% of total flux
-inline float computeHFD(const cv::Mat& starRegion,
-                        const cv::Point2f& centroid,
-                        const BackgroundStats& background,
-                        double maxApertureRadius = kMaxApertureRadius,
-                        float backgroundStdDevMultiplier = kHFDBackgroundMultiplier) {
-
-  double backgroundThreshold = background.level + backgroundStdDevMultiplier * background.stddev;
-
-  // Background-subtract the image
-  cv::Mat floatMat;
-  starRegion.convertTo(floatMat, CV_32FC1);
-  floatMat -= static_cast<float>(backgroundThreshold);
-
-  // Collect all pixels within maxApertureRadius aperture
-  double totalFlux = 0.0;
-  std::vector<std::pair<double, float>> pixelsByDistance;  // (distance, flux)
-
-  for (int y = 0; y < floatMat.rows; y++) {
-    for (int x = 0; x < floatMat.cols; x++) {
-      float pixel = floatMat.at<float>(y, x);
-      if (pixel <= 0.0f) continue;  // Skip negative/zero pixels
-
-      double dx = (x + 0.5) - centroid.x;
-      double dy = (y + 0.5) - centroid.y;
-      double dist = std::sqrt(dx * dx + dy * dy);
-
-      if (dist <= maxApertureRadius) {
-        totalFlux += pixel;
-        pixelsByDistance.push_back({dist, pixel});
-      }
-    }
-  }
-
-  if (totalFlux <= 0.0) {
-    return 0.0f;
-  }
-
-  double halfFlux = totalFlux / 2.0;
-
-  // Sort pixels by distance from centroid
-  std::sort(pixelsByDistance.begin(), pixelsByDistance.end());
-
-  // Accumulate flux until we reach half-flux
-  double cumulativeFlux = 0.0;
-  double previousCumulativeFlux = 0.0;
-  double previousDistance = 0.0;
-
-  for (const auto& [dist, pixel] : pixelsByDistance) {
-    cumulativeFlux += pixel;
-
-    if (cumulativeFlux >= halfFlux) {
-      // Interpolate the half-flux crossing
-      double crossingFlux = cumulativeFlux - previousCumulativeFlux;
-      double fraction = crossingFlux > 0.0 ? (halfFlux - previousCumulativeFlux) / crossingFlux : 0.0;
-
-      double hfr = previousDistance + fraction * (dist - previousDistance);
-      return static_cast<float>(hfr * 2.0f);  // Return diameter (HFD = 2 × HFR)
-    }
-
-    previousCumulativeFlux = cumulativeFlux;
-    previousDistance = dist;
-  }
-
-  return 0.0f;
 }
 
 // Compute background and centroid with iterative refinement
@@ -274,19 +266,70 @@ inline BackgroundAndCentroid computeBackgroundAndCentroid(
     float backgroundStdDevMultiplier = kBackgroundSigmaThreshold,
     int minBackgroundRadius = kMinBackgroundRadius,
     int maxBackgroundRadius = kMaxBackgroundRadius) {
+  // First pass: background annulus around crop center.
+  BackgroundStats background =
+      computeBackgroundStats(starRegion, minBackgroundRadius, maxBackgroundRadius);
 
-  // First pass: background annulus around crop center
-  cv::Point2f initialCenter(starRegion.cols / 2.0f, starRegion.rows / 2.0f);
-  BackgroundStats background = computeBackgroundStats(starRegion, initialCenter, minBackgroundRadius, maxBackgroundRadius);
+  cv::Point2f centroid =
+      computeCentroid(starRegion, background, backgroundStdDevMultiplier);
 
-  cv::Point2f centroid = computeCentroid(starRegion, background, backgroundStdDevMultiplier);
+  // Second pass: background annulus around measured centroid.
+  background =
+      computeBackgroundStats(starRegion, centroid, minBackgroundRadius, maxBackgroundRadius);
 
-  // Second pass: background annulus around measured centroid
-  background = computeBackgroundStats(starRegion, centroid, minBackgroundRadius, maxBackgroundRadius);
-
-  centroid = computeCentroid(starRegion, background, backgroundStdDevMultiplier);
+  centroid =
+      computeCentroid(starRegion, background, backgroundStdDevMultiplier);
 
   return BackgroundAndCentroid{background, centroid};
+}
+
+// Compute HFD (Half-Flux Diameter) using pixel-by-pixel method
+// Diameter of circle containing 50% of total flux
+inline float computeHFD(const cv::Mat& starRegion,
+                        const cv::Point2f& centroid,
+                        const BackgroundStats& background,
+                        double maxApertureRadius = kMaxApertureRadius,
+                        float backgroundStdDevMultiplier = kHFDBackgroundMultiplier) {
+  cv::Mat floatMat;
+  starRegion.convertTo(floatMat, CV_32FC1);
+  floatMat -= static_cast<float>(background.level);
+
+  // Collect all pixels within maxApertureRadius aperture
+  auto apertureData = collectAperturePixels(floatMat, centroid, maxApertureRadius);
+
+  if (apertureData.totalFlux <= 0.0) {
+    return 0.0f;
+  }
+
+  double halfFlux = apertureData.totalFlux / 2.0;
+
+  // Pixel-by-pixel accumulation method
+  // Sort pixels by distance from centroid and accumulate flux
+  std::sort(apertureData.pixelsByDistance.begin(), apertureData.pixelsByDistance.end());
+
+  double cumulativeFlux = 0.0;
+  double previousCumulativeFlux = 0.0;
+  double previousDistance = 0.0;
+
+  for (const auto& [dist, pixel] : apertureData.pixelsByDistance) {
+    cumulativeFlux += pixel;
+
+    if (cumulativeFlux >= halfFlux) {
+      // Interpolate the half-flux crossing instead of returning the distance
+      // of the pixel that pushed the cumulative flux over 50%.
+      double crossingFlux = cumulativeFlux - previousCumulativeFlux;
+      double fraction =
+          crossingFlux > 0.0 ? (halfFlux - previousCumulativeFlux) / crossingFlux : 0.0;
+
+      double hfr = previousDistance + fraction * (dist - previousDistance);
+      return static_cast<float>(hfr * 2.0f);  // Return diameter
+    }
+
+    previousCumulativeFlux = cumulativeFlux;
+    previousDistance = dist;
+  }
+
+  return 0.0f;
 }
 
 // Find the brightest region in an image (returns bounding box around brightest pixel)
