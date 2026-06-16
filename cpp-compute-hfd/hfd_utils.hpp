@@ -16,7 +16,7 @@ constexpr int    kMinBackgroundRadius = 20;          // Minimum radius for backg
 constexpr int    kMaxBackgroundRadius = 25;          // Maximum radius for background annulus (pixels)
 
 // HFD computation parameters
-constexpr double kMaxApertureRadius = 10.0;          // Maximum aperture radius for HFD (pixels)
+constexpr double kMaxApertureRadius = 20.0;          // Maximum aperture radius for HFD (pixels)
 constexpr float  kHFDBackgroundMultiplier = 0.0f;    // Background stddev multiplier for HFD (0 = level only)
 
 // Sigma clipping parameters (for robust background estimation)
