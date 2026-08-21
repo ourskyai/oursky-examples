@@ -11,7 +11,7 @@
 #include <opencv2/imgproc.hpp>
 
 // Background and centroid computation parameters
-constexpr float  kBackgroundSigmaThreshold = 3.0f;   // Sigma threshold for centroid computation
+constexpr float  kBackgroundSigmaThreshold = 0.0f;   // Sigma threshold for centroid computation
 constexpr int    kMinBackgroundRadius = 20;          // Minimum radius for background annulus (pixels)
 constexpr int    kMaxBackgroundRadius = 25;          // Maximum radius for background annulus (pixels)
 
@@ -221,8 +221,6 @@ inline float computeHFD(const cv::Mat& starRegion,
   for (int y = 0; y < floatMat.rows; y++) {
     for (int x = 0; x < floatMat.cols; x++) {
       float pixel = floatMat.at<float>(y, x);
-      if (pixel <= 0.0f) continue;  // Skip negative/zero pixels
-
       double dx = (x + 0.5) - centroid.x;
       double dy = (y + 0.5) - centroid.y;
       double dist = std::sqrt(dx * dx + dy * dy);
