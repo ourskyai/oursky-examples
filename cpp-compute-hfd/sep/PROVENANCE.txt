@@ -1,0 +1,2 @@
+sep-pjw (github.com/PJ-Watson/sep-pjw), matches installed python sep 1.4.1. LGPL-3.0.
+053ec2a3dc346456ee996aaa07c9b528bd1fc0d6
