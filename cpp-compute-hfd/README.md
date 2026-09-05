@@ -1,6 +1,6 @@
-# HFD Computation Demo
+# Source Extractor EE50 Computation Demo
 
-Self-contained demonstration of HFD (Half-Flux Diameter) computation for star images.
+Demonstrates spot-size measurement with the same SEP (Source Extractor) EE50 implementation used by `lib_image-proc`.
 
 ## Requirements
 
@@ -14,51 +14,47 @@ sudo apt install libopencv-dev
 brew install opencv
 ```
 
+SEP is vendored in `sep/` and built automatically.
+
 ## Build
 
 ```bash
-mkdir build && cd build
-cmake ..
-make compute_hfd_demo
+cmake -S . -B build
+cmake --build build --target compute_hfd_demo
 ```
 
 ## Run
 
-From the build directory:
+From the project directory:
 
 ```bash
-./compute_hfd_demo
+./build/compute_hfd_demo 69-focus-bottom-right-exposure-04.fits
 ```
+
+Run without an argument to measure the generated Gaussian test image instead.
 
 ## What it does
 
-- Generates a simulated Gaussian star (σ=2 pixels) and saves it to `/tmp/generated_star.jpg`
-- Computes background, centroid, and HFD
-- Compares result to theoretical and empirical values
+- Loads an uncompressed 16-bit primary FITS image or an OpenCV-supported single-channel image
+- Generates a simulated Gaussian star when no path is supplied
+- Runs SEP background estimation and 5σ source extraction on the full frame
+- Selects the brightest valid source and computes aperture photometry in 0.5-pixel steps
+- Reports the EE50 diameter, centroid, peak, sky level, background RMS, total flux, and source count
 
-## Example Output
+## Result for `69-focus-bottom-right-exposure-04.fits`
 
 ```
-HFD Computation Demo
+Source Extractor EE50 Computation Demo
 
-Input:  sigma = 2 px
-
-Generating simulated star:
-  Image size:  100x100 px
-  Center:      (50, 50)
-  Peak:        50000 ADU
-  Background:  1000 ADU
-  Sigma:       2 px
-  Saved:       /tmp/generated_star.jpg
+Input:  69-focus-bottom-right-exposure-04.fits
+Image size:  1000x1000 px
 
 Results:
-  Background:  1000.0 ± 0.00 ADU
-  Centroid:    (25.00, 25.00)
-  HFD:         5.099 px
-
-Expected:
-  Theoretical: 4.710 px  (2.355σ)
-  Empirical:   5.100 px  (2.550σ)
-  Error:       -0.001 px (0.0%)
+  Sources:     1
+  Sky level:   493.38 ADU
+  Background:  3.79 ADU RMS
+  Centroid:    (556.81, 576.78)
+  Peak:        19573.32 ADU
+  Total flux:  98750.94 ADU
+  EE50:        2.657 px
 ```
-
