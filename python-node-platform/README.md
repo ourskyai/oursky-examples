@@ -1,6 +1,6 @@
-# Python Node Platform - System Status
+# Python Node Platform - System Status and Mount Model
 
-Uses the OurSky Node Platform Python SDK to fetch and display the system status of a node.
+Uses the OurSky Node Platform Python SDK to fetch and display the system status and mount model of a node.
 
 ## Setup
 
@@ -21,3 +21,14 @@ cp .env.example .env
 ```bash
 python main.py
 ```
+
+## Mount model examples
+
+The default run calls `v1GetSystemStatus` and `v1GetMountModel`. `main.py` also includes commented examples for APIs that modify the current mount model:
+
+- `v1AddMountModelPointHere`
+- `v1AddMountModelPointUsingImage`
+- `v1RemoveMountModelPoint`
+- `v1ClearMountModel`
+
+Uncomment only the calls you want to run.
