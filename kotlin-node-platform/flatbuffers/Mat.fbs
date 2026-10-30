@@ -1,0 +1,10 @@
+namespace hwdaemon;
+
+table Mat {
+    rows: uint32;
+    cols: uint32;
+    type: uint32;
+    data: [uint8];
+}
+
+root_type Mat;

@@ -1,0 +1,27 @@
+include "Mat.fbs";
+
+namespace hwdaemon;
+
+enum ChannelType: byte { BLUE = 0, GREEN = 1, RED = 2, MONO = 3 }
+
+table PerChannelStatistics {
+  channel: ChannelType;
+  mean: double;
+  median: uint16;
+  standard_deviation: double;
+  average_deviation: double;
+  root_mean_square: double;
+  min_value: uint16;
+  max_value: uint16;
+  histogram: Mat;
+}
+
+table ImageStatistics {
+  total_pixels: uint64;
+  num_non_zero_pixels: uint64;
+  channel_stats: [PerChannelStatistics];  // maps aren't supported
+  height: uint32;
+  width: uint32;
+}
+
+root_type ImageStatistics;

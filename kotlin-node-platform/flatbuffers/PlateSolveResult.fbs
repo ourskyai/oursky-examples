@@ -1,0 +1,27 @@
+namespace hwdaemon;
+
+table MatchedStar {
+  raRadians: double;
+  decRadians: double;
+  catalogGBandMagnitude: double;
+  measuredADUCounts: uint;
+  centerPixelX: int;
+  centerPixelY: int;
+  fullWidthHalfMaxArcSeconds: double;
+  semiMajorAxisLengthArcSeconds: double;
+  semiMinorAxisLengthArcSeconds: double;
+}
+
+table PlateSolveResult {
+  centerRARadians: double;
+  centerDecRadians: double;
+  fieldOfViewRadians: double;
+  cameraIntrinsicMatrix: [double];
+  cameraRotationAndTranslationMatrix: [double];
+  cameraRadialDistortionCoefficients: [double];
+  cameraTangentialDistortionCoefficients: [double];
+  cameraThinPrismDistortionCoefficients: [double];
+  matchedStars: [MatchedStar];
+}
+
+root_type PlateSolveResult;
