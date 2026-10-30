@@ -1,0 +1,15 @@
+namespace hwdaemon;
+
+table ImageMetadata {
+  bit_depth: uint8;
+  width: int;
+  height: int;
+  pixel_size_x_microns: double;
+  pixel_size_y_microns: double;
+  capture_start: int64;
+  exposure_seconds: double;
+  image_id: string;
+  sensor_temperature_celsius: double = null;
+}
+
+root_type ImageMetadata;
