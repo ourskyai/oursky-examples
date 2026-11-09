@@ -1,0 +1,50 @@
+syntax = "proto3";
+
+package metrics;
+
+option java_multiple_files = true;
+option java_package = "ai.oursky.protobuf.metrics";
+
+import "google/protobuf/timestamp.proto";
+
+// Metric type enumeration
+enum MetricType {
+  METRIC_TYPE_UNSPECIFIED = 0;
+  GAUGE = 1;
+  DISTRIBUTION = 2;
+  COUNT = 3;
+  EVENT = 4;
+}
+
+// V1Metric message definition
+message V1Metric {
+  string name = 1;
+  double value = 2;
+  MetricType type = 3;
+  google.protobuf.Timestamp measured_at = 4;
+  repeated string tags = 5;
+  optional string description = 6;
+}
+
+// A single observation within a V2MetricSeries.
+message V2MetricPoint {
+  google.protobuf.Timestamp measured_at = 1;
+  double value = 2;
+}
+
+// A batched time series: name, type, and tags are stated once and shared by
+// every point, instead of being repeated per observation as in V1Metric.
+message V2MetricSeries {
+  string name = 1;
+  MetricType type = 2;
+  repeated string tags = 3;
+  repeated V2MetricPoint points = 4;
+  optional string description = 5;
+}
+
+// One NATS message per publisher flush interval, published to
+// metrics.oursky.<lineageId>.v2Metrics (V1Metric messages go to
+// metrics.oursky.<lineageId>.v1Metric one point at a time).
+message V2MetricBatch {
+  repeated V2MetricSeries series = 1;
+}

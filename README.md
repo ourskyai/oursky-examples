@@ -12,7 +12,7 @@ Each folder is an "app" or example with minimal setup and independent readme's t
 
 * [python-poetry-sda-basic](./python-poetry-sda-basic) - Uses the OurSky SDA Python SDK to show how to import and use the SDK to fetch an array of TDMs.
 * [python-search](./python-search) - Uses the OurSky v2 search endpoints to create dynamic plane scans and RIC volumetric searches for a satellite target.
-* [python-node-platform](./python-node-platform) - Uses the OurSky Node Platform Python SDK to fetch and display the system status of a node.
+* [python-node-platform](./python-node-platform) - C2 capture with node-local image storage, continuous capture to PNG, live EC metrics, and system status/mount model using the Python SDKs.
 
 ### C#
 

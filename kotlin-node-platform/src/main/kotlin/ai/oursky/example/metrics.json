@@ -1,0 +1,9 @@
+{
+  "metricNames": [
+    "node_controller.safety_monitor.is_all_sky_safe",
+    "node_controller.safety_monitor.is_manual_operation_mode",
+    "node_controller.safety_monitor.is_night",
+    "node_controller.safety_monitor.is_roof_open",
+    "node_controller.safety_monitor.is_weather_safe"
+  ]
+}
